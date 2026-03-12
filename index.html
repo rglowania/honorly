@@ -465,8 +465,19 @@ function onLeistungChange(pid, lid) {
   var gwEl = document.getElementById('gw_'+pid);
   gwEl.value = cfg.gwDef;
   gwEl.step = cfg.gwStep;
-  if (cfg.pauschal) { gwEl.setAttribute('readonly',''); gwEl.value = cfg.pauschal; }
-  else { gwEl.removeAttribute('readonly'); }
+  if (cfg.pauschal || cfg.gw_auto) {
+    gwEl.setAttribute('readonly','');
+    gwEl.removeAttribute('oninput');
+    if (cfg.pauschal) gwEl.value = cfg.pauschal;
+    gwEl.style.opacity = cfg.gw_auto ? '0.65' : '';
+    gwEl.style.borderStyle = cfg.gw_auto ? 'dashed' : '';
+  } else {
+    gwEl.removeAttribute('readonly');
+    gwEl.setAttribute('oninput','calc()');
+    gwEl.style.opacity = '';
+    gwEl.style.borderStyle = '';
+  }
+  document.getElementById('gwlbl_'+pid).textContent = cfg.gw_auto ? '↺ aus Anlagen berechnet' : 'GW in EUR';
   calc();
 }
 
