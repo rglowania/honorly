@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Honorly</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root,[data-theme="dark"]{
+  --bg:#0c1410;--surface:#13201a;--surface2:#192b22;--border:#213328;
+  --gold:#5d9e7a;--gold-light:#89c4a2;--gold-dim:rgba(93,158,122,0.13);
+  --text:#ddeee5;--text-muted:#6e9480;
+}
+[data-theme="light"]{
+  --bg:#f0f7f3;--surface:#ffffff;--surface2:#e6f2eb;--border:#bdd8c8;
+  --gold:#2e7a50;--gold-light:#1e5c3a;--gold-dim:rgba(46,122,80,0.10);
+  --text:#0f1f16;--text-muted:#4d7a5e;
+}
+@media(prefers-color-scheme:light){
+  :root:not([data-theme]){
+    --bg:#f0f7f3;--surface:#ffffff;--surface2:#e6f2eb;--border:#bdd8c8;
+    --gold:#2e7a50;--gold-light:#1e5c3a;--gold-dim:rgba(46,122,80,0.10);
+    --text:#0f1f16;--text-muted:#4d7a5e;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-weight:300;min-height:100vh;padding:40px 20px 80px;transition:background .25s,color .25s;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(93,158,122,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(93,158,122,0.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.container{max-width:920px;margin:0 auto;position:relative;z-index:1;}
+header{text-align:center;margin-bottom:48px;}
+.badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);border:1px solid rgba(201,168,76,0.3);padding:4px 14px;margin-bottom:18px;}
+h1{font-family:'Playfair Display',serif;font-size:clamp(26px,5vw,44px);font-weight:600;line-height:1.15;color:var(--text);margin-bottom:10px;}
+h1 span{color:var(--gold);}
+.subtitle{font-size:12px;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;letter-spacing:0.5px;}
+/* Theme toggle */
+.theme-toggle{position:fixed;top:18px;right:20px;display:flex;gap:3px;z-index:1000;background:var(--surface);border:1px solid var(--border);padding:4px;}
+.theme-btn{width:28px;height:28px;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-muted);transition:all .2s;padding:0;}
+.theme-btn:hover{color:var(--gold);}
+.theme-btn.active{color:var(--gold);background:var(--gold-dim);}
+.theme-btn svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);padding:24px 28px;margin-bottom:16px;position:relative;transition:background .25s,border-color .25s;}
+.card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--gold);}
+.card-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:18px;}
+/* Table header */
+.pos-header{display:grid;grid-template-columns:2.4fr 1.1fr 1fr 1fr 90px 28px;gap:8px;padding:6px 12px;font-size:9px;font-family:'IBM Plex Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border);}
+.pos-row{display:grid;grid-template-columns:2.4fr 1.1fr 1fr 1fr 90px 28px;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border);transition:background .15s;}
+.pos-row:hover{background:rgba(128,128,128,0.04);}
+.pos-row:last-child{border-bottom:none;}
+/* Form elements */
+select,input[type="number"]{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 8px;outline:none;transition:border-color .2s,background .25s;}
+select:focus,input[type="number"]:focus{border-color:var(--gold);}
+input[type="number"]{-moz-appearance:textfield;appearance:textfield;}
+input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;}
+.hint{font-size:10px;color:var(--text-muted);margin-top:5px;font-family:'IBM Plex Mono',monospace;line-height:1.5;}
+.hint b{color:var(--gold-light);}
+.pos-betrag{font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:right;color:var(--gold-light);}
+.pos-remove{width:24px;height:24px;background:transparent;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-left:auto;flex-shrink:0;}
+.pos-remove:hover{border-color:#c0554a;color:#c0554a;}
+.add-btn{display:flex;align-items:center;gap:8px;width:100%;background:transparent;border:1px dashed var(--border);color:var(--text-muted);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px 14px;cursor:pointer;transition:all .2s;margin-top:12px;}
+.add-btn:hover{border-color:var(--gold);color:var(--gold);}
+/* Result */
+.result-card{background:var(--surface);border:1px solid var(--gold);padding:28px;margin-top:20px;transition:background .25s;}
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.result-row:last-child{border-bottom:none;}
+.result-row .rl{color:var(--text-muted);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;max-width:68%;}
+.result-row .rv{font-family:'IBM Plex Mono',monospace;font-size:13px;white-space:nowrap;}
+.sep{height:1px;background:var(--border);margin:4px 0;}
+.total-row{display:flex;justify-content:space-between;align-items:baseline;padding-top:18px;border-top:1px solid var(--gold);margin-top:8px;}
+.total-label{font-family:'Playfair Display',serif;font-size:17px;}
+.total-value{font-family:'IBM Plex Mono',monospace;font-size:30px;color:var(--gold-light);font-weight:500;}
+.note{font-size:10px;color:var(--text-muted);margin-top:14px;line-height:1.7;font-family:'IBM Plex Mono',monospace;}
+@media(max-width:680px){
+  .pos-header{display:none;}
+  .pos-row{grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto;gap:6px;}
+  .pos-name-cell{grid-column:1/3;}
+}
+</style>
+</head>
+<body>
+
+<!-- Theme Toggle -->
+<div class="theme-toggle">
+  <button class="theme-btn" id="btn-dark" onclick="setTheme('dark')" title="Dunkel">
+    <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  </button>
+  <button class="theme-btn" id="btn-system" onclick="setTheme('system')" title="System">
+    <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+  </button>
+  <button class="theme-btn" id="btn-light" onclick="setTheme('light')" title="Hell">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+  </button>
+</div>
+
+<div class="container">
+<header>
+  <div class="badge">StBVV &middot; RVG &mdash; Honorarberechnung</div>
+  <h1><span>Honor</span>ly</h1>
+  <p class="subtitle">Steuerberaterverg&uuml;tung nach StBVV &amp; RVG &middot; Tabellen A, B &amp; C &middot; inkl. MwSt.</p>
+</header>
+
+<div class="card">
+  <div class="card-title">Leistungspositionen</div>
+  <div class="pos-header">
+    <span>Leistung</span>
+    <span>Tabelle / Rahmen</span>
+    <span>Geb&#xFC;hrensatz</span>
+    <span>Gegenstandswert</span>
+    <span style="text-align:right">Netto</span>
+    <span></span>
+  </div>
+  <div id="posList"></div>
+  <button class="add-btn" onclick="addPosition()">
+    <span style="width:18px;height:18px;border:1px solid currentColor;display:inline-flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">+</span>
+    Position hinzuf&#xFC;gen
+  </button>
+</div>
+
+<div class="result-card">
+  <div class="card-title" style="color:var(--gold)">Honor&#xE4;r&#xFC;bersicht</div>
+  <div id="resultRows"></div>
+  <div class="total-row">
+    <div class="total-label">Gesamt inkl. MwSt.</div>
+    <div class="total-value" id="totalVal">0,00 EUR</div>
+  </div>
+  <p class="note">
+    Richtwert nach StBVV Anlage 1. Das tats&#xE4;chliche Honorar kann im Rahmen der gesetzlichen Grenzen frei vereinbart werden.<br>
+    Mittelgeb&#xFC;hr = (Mindestsatz + H&#xF6;chstsatz) &#xF7; 2 &middot; Quelle: BStBK / &#xA7;&#xA7; 11, 24 StBVV
+  </p>
+</div>
+</div>
+
+<script>
+// ── Theme ──────────────────────────────────────────────────────────────────
+function setTheme(t) {
+  if (t === 'system') {
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', t);
+  }
+  try { localStorage.setItem('stbvv-theme', t); } catch(e){}
+  document.querySelectorAll('.theme-btn').forEach(function(b){ b.classList.remove('active'); });
+  var btn = document.getElementById('btn-' + t);
+  if (btn) btn.classList.add('active');
+}
+(function(){
+  var saved = 'system';
+  try { saved = localStorage.getItem('stbvv-theme') || 'system'; } catch(e){}
+  setTheme(saved);
+})();
+
+// ── StBVV Tabellen ──────────────────────────────────────────────────────────
+// Tabelle A: volle Gebühr (Basis für 1/10-Satz)
+var tabelleA = [
+  [500,23],[1000,37],[1500,51],[2000,65],[3000,78],[4000,91],[5000,104],
+  [7500,131],[10000,158],[13000,185],[16000,210],[19000,234],[22000,258],
+  [25000,280],[30000,320],[35000,356],[40000,390],[45000,422],[50000,452],
+  [65000,516],[80000,577],[95000,635],[110000,690],[125000,742],[140000,792],
+  [155000,839],[170000,884],[185000,927],[200000,968],[230000,1044],
+  [260000,1116],[290000,1184],[320000,1249],[350000,1311],[400000,1401],
+  [450000,1488],[500000,1571],[600000,1728],[700000,1875],[800000,2014],
+  [900000,2146],[1000000,2272],[1500000,2834],[2000000,3330],[5000000,5555],
+  [10000000,8219]
+];
+// Tabelle B: volle Gebühr (1/20-Satz Basis, ~60% von A)
+var tabelleB = tabelleA.map(function(r){ return [r[0], Math.round(r[1]*0.6)]; });
+// Tabelle C: Buchführung (volle Gebühr, ~80% von A)
+var tabelleC = tabelleA.map(function(r){ return [r[0], Math.round(r[1]*0.8)]; });
+
+
+// RVG Tabelle §13 (volle Gebühr in EUR)
+var tabelleRVG = [
+  [500,49],[1000,80],[1500,111],[2000,142],[3000,169],[4000,196],[5000,223],
+  [6000,250],[7000,277],[8000,304],[9000,331],[10000,358],[13000,406],
+  [16000,454],[19000,502],[22000,550],[25000,588],[30000,636],[35000,684],
+  [40000,732],[45000,780],[50000,828],[65000,924],[80000,1020],[95000,1116],
+  [110000,1212],[125000,1308],[140000,1404],[155000,1500],[170000,1596],
+  [185000,1692],[200000,1788],[230000,1884],[260000,1980],[290000,2076],
+  [320000,2172],[350000,2268],[400000,2436],[450000,2604],[500000,2772],
+  [600000,3108],[700000,3444],[800000,3780],[900000,4116],[1000000,4452],
+  [1500000,5652],[2000000,6852],[2500000,8052],[3000000,9252],[4000000,11052],
+  [5000000,12852]
+];
+function lookupRVG(gw) {
+  for (var i=0; i<tabelleRVG.length; i++) {
+    if (gw <= tabelleRVG[i][0]) return tabelleRVG[i][1];
+  }
+  var last = tabelleRVG[tabelleRVG.length-1];
+  return last[1] + Math.round((gw - last[0]) / 500000 * 1200);
+}
+
+function lookup(gw, tab) {
+  for (var i = 0; i < tab.length; i++) {
+    if (gw <= tab[i][0]) return tab[i][1];
+  }
+  var last = tab[tab.length-1];
+  return last[1] + Math.round((gw - last[0]) / 1000000 * 2000);
+}
+
+// ── Leistungskatalog ────────────────────────────────────────────────────────
+// nenner: Teiler des Faktors (10 oder 20) – Mittelsatz = (min+max)/2 (Dezimal erlaubt)
+// schrittweite: 0.5 oder 1 je nach Leistung
+var leistungen = [
+  // ── Einkommensteuererklärung ──────────────────────────────────────────────
+  {id:'est',        name:'ESt-Mantelbogen',                      tab:tabelleA, nenner:10, min:1,  max:6,   default:1,    hint:'&sect;24 I Nr.1 StBVV &middot; GW: Summe pos. Eink&uuml;nfte (aus Anlagen), mind. 8.000 &euro;', gwDef:50000,  gwStep:1000, gw_auto:true},
+  {id:'est_beschr', name:'ESt beschr&auml;nkt (kein Wohnsitz D)',tab:tabelleA, nenner:10, min:2,  max:6,   default:2,    hint:'&sect;24 I StBVV &middot; Mantelbogen beschr&auml;nkte Steuerpflicht', gwDef:50000, gwStep:1000, gw_auto:true},
+  // ── Anlagen (§27 StBVV, Zwanzigstel) ──────────────────────────────────────
+  {id:'anlage_n',   name:'Anlage N',                             tab:tabelleA, nenner:20, min:1,  max:12,  default:3,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK, mind. 8.000 &euro;', gwDef:40000, gwStep:1000, anlage:true},
+  {id:'anlage_n2',  name:'Anlage N (2 Arbeitgeber)',             tab:tabelleA, nenner:20, min:1,  max:12,  default:5,    hint:'&sect;27 StBVV &middot; erh&ouml;hter Satz bei zwei Arbeitsverh&auml;ltnissen', gwDef:40000, gwStep:1000, anlage:true},
+  {id:'anlage_ngre',name:'Anlage N-Gre/N-AUS',                  tab:tabelleA, nenner:20, min:1,  max:12,  default:4,    hint:'&sect;27 StBVV &middot; Grenzg&auml;nger / Ausl&auml;nder &middot; ab 100.000 &euro; Einkommen 5/20', gwDef:60000, gwStep:1000, anlage:true},
+  {id:'anlage_r_d', name:'Anlage R (deutsch)',                   tab:tabelleA, nenner:20, min:1,  max:6,   default:2,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK', gwDef:20000, gwStep:1000, anlage:true},
+  {id:'anlage_r_ch',name:'Anlage R (Schweiz)',                   tab:tabelleA, nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; Schweizer Rente / DBA', gwDef:20000, gwStep:1000, anlage:true},
+  {id:'anlage_r_mix',name:'Anlage R (gemischt)',                 tab:tabelleA, nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; dt. und ausl. Renten', gwDef:20000, gwStep:1000, anlage:true},
+  {id:'anlage_v',   name:'Anlage V (Vermietung & Verpachtung)',  tab:tabelleA, nenner:20, min:5,  max:7,   default:5,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK &middot; 7/20 bei Neuanschaffung/hoher Belegzahl', gwDef:30000, gwStep:1000, anlage:true},
+  {id:'anlage_kap', name:'Anlage KAP (inl. Bescheinigungen)',    tab:tabelleA, nenner:20, min:1,  max:6,   default:1,    hint:'&sect;27 StBVV &middot; 1-2 Steuerbescheinigungen &middot; GW: Kapitalertr&auml;ge', gwDef:10000, gwStep:500, anlage:true},
+  {id:'anlage_kap_ausl',name:'Anlage KAP (ausl. / mehrere)',     tab:tabelleA, nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; ausl&auml;ndische oder viele Bescheinigungen', gwDef:10000, gwStep:500, anlage:true},
+  {id:'wegzug',     name:'Wegzug aus Deutschland',               tab:tabelleA, nenner:20, min:5,  max:12,  default:5,    hint:'&sect;27 StBVV &middot; Wegzugsbesteuerung &sect;6 AStG', gwDef:80000, gwStep:1000, anlage:true},
+  // ── Betriebliche Steuererklärungen ────────────────────────────────────────
+  {id:'ust',        name:'Umsatzsteuererklarung',                tab:tabelleA, nenner:10, min:1,  max:8,   default:2,    hint:'&sect;24 I Nr.2 StBVV &middot; GW: Jahresumsatz', gwDef:200000, gwStep:1000},
+  {id:'gewerbe',    name:'Gewerbesteuererklarung',               tab:tabelleA, nenner:10, min:1,  max:6,   default:2,    hint:'&sect;24 I Nr.1 StBVV &middot; GW: Gewerbeertrag', gwDef:80000, gwStep:1000},
+  {id:'gewinn',     name:'Gewinnermittlung G+E (E&Uuml;R)',      tab:tabelleA, nenner:10, min:5,  max:20,  default:3,    hint:'&sect;25 StBVV &middot; GW: h&ouml;chster Betrag BE/BA, mind. 17.500 &euro;', gwDef:120000, gwStep:1000},
+  {id:'bilanz',     name:'Jahresabschluss / Bilanz',             tab:tabelleB, nenner:10, min:25, max:30,  default:27.5, hint:'&sect;35 StBVV &middot; Tabelle B &middot; GW: Mittel aus berichtigter Bilanzsumme und Jahresleistung', gwDef:500000, gwStep:5000},
+  {id:'buchf',      name:'Laufende Buchf&uuml;hrung (monatl.)', tab:tabelleC, nenner:10, min:2,  max:12,  default:7,    hint:'&sect;33 StBVV &middot; Tabelle C &middot; GW: Monatsumsatz', gwDef:20000, gwStep:500},
+  {id:'kst',        name:'K&ouml;rperschaftsteuer (KSt)',         tab:tabelleA, nenner:10, min:8,  max:20,  default:12,   hint:'&sect;24 StBVV &middot; GW: zu versteuerndes Einkommen', gwDef:100000, gwStep:1000},
+  {id:'ust_va',     name:'USt-Voranmeldung (je Monat)',          tab:tabelleA, nenner:10, min:1,  max:4,   default:2,    hint:'&sect;24 I Nr.2 StBVV &middot; GW: Monatsumsatz', gwDef:20000, gwStep:500},
+  // ── Sonstiges ─────────────────────────────────────────────────────────────
+  {id:'beratung',   name:'Beratung / Gutachten',                 tab:tabelleA, nenner:10, min:1,  max:10,  default:5,    hint:'&sect;21 StBVV &middot; Rahmengeb&uuml;hr &middot; GW: Gegenstandswert', gwDef:50000, gwStep:1000},
+  {id:'einspruch',  name:'Einspruch (&sect;40 StBVV i.V.m. RVG)', tab:tabelleRVG, nenner:10, min:5,  max:25,  default:13,   hint:'&sect;40 StBVV i.V.m. Nr. 2300 VV-RVG &middot; 0,5&ndash;2,5 &middot; GW: festgesetzte Steuer', gwDef:5000, gwStep:500, rvg:true},
+  {id:'beschein',   name:'Bescheinigung / Best&auml;tigung',     tab:tabelleA, nenner:10, min:1,  max:4,   default:2,    hint:'&sect;22 StBVV &middot; GW: Gegenstandswert', gwDef:5000, gwStep:500},
+  // ── Fest (immer am Ende) ──────────────────────────────────────────────────
+  {id:'bescheid',   name:'Bescheidprüfung',                 tab:tabelleA, nenner:10, min:1,  max:1,   default:1,    hint:'§28 StBVV', gwDef:30, gwStep:1, pauschal:30, fixed:true},
+  {id:'auslagen',   name:'Auslagenpauschale',                    tab:tabelleA, nenner:10, min:1,  max:1,   default:1,    hint:'§16 StBVV', gwDef:20, gwStep:1, pauschal:20, fixed:true},
+];
+
+var leistungMap = {};
+leistungen.forEach(function(l){ leistungMap[l.id] = l; });
+
+// Mittelsatz = arithmetisches Mittel (Dezimalwert erlaubt)
+function mittelsatz(min, max) {
+  return (min + max) / 2;
+}
+
+// Faktor-Optionen in 0.5-Schritten
+function makeFaktorOptions(cfg, selectedVal) {
+  var mittel = mittelsatz(cfg.min, cfg.max);
+  var sel = (selectedVal !== undefined) ? selectedVal : (cfg.default !== undefined ? cfg.default : mittel);
+  var opts = '';
+  // Schritte: 0.5er zwischen min und max
+  for (var v = cfg.min; v <= cfg.max + 0.01; v += 0.5) {
+    v = Math.round(v * 2) / 2; // floating point fix
+    var label = cfg.rvg
+      ? (v/10).toFixed(1).replace('.',',') + '-fach (Nr. 2300 VV-RVG)'
+      : v + '/' + cfg.nenner;
+    var vorgabe = cfg.default !== undefined ? cfg.default : mittel;
+    var suffix = '';
+    if (v === cfg.min) suffix = ' – Mindestsatz';
+    else if (v === cfg.max) suffix = ' – Höchstsatz';
+    if (Math.abs(v - mittel) < 0.01) suffix += (suffix ? ' / ' : ' – ') + 'Mittelsatz';
+    var isSel = (Math.abs(v - sel) < 0.01) ? ' selected' : '';
+    opts += '<option value="' + v + '"' + isSel + '>' + label + suffix + '</option>';
+  }
+  return opts;
+}
+
+// ── Position aufbauen ───────────────────────────────────────────────────────
+var posCounter = 0;
+
+function addPosition(presetId) {
+  posCounter++;
+  var pid = 'pos_' + posCounter;
+  var lid = presetId || 'est';
+  var cfg = leistungMap[lid];
+  var row = document.createElement('div');
+  row.className = 'pos-row';
+  row.id = pid;
+  row.innerHTML = buildRowHTML(pid, lid, cfg);
+  document.getElementById('posList').appendChild(row);
+  calc();
+}
+
+function buildRowHTML(pid, lid, cfg) {
+  var leistungOpts = leistungen.map(function(l){
+    return '<option value="' + l.id + '"' + (l.id===lid?' selected':'') + '>' + l.name + '</option>';
+  }).join('');
+  var mittel = mittelsatz(cfg.min, cfg.max);
+  var rahmen = cfg.min + '/' + cfg.nenner + ' &ndash; ' + cfg.max + '/' + cfg.nenner;
+  var tabName = cfg.tab===tabelleC?'C':cfg.tab===tabelleB?'B':'A';
+  var tabelleCol = cfg.pauschal
+    ? '<span style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--text-muted)">Pauschal</span>'
+    : '<span style="display:flex;flex-direction:column;justify-content:center">' +
+        '<span style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--gold)" id="rahmen_'+pid+'">Tab.&nbsp;' + tabName + '&nbsp;&bull;&nbsp;' + rahmen + '</span>' +
+        '<span class="hint" id="mittelhint_'+pid+'">' +
+        (cfg.rvg
+          ? 'Regelwert: <b>1,3-fach</b> &middot; Rahmen: 0,5&ndash;2,5'
+          : 'Mittelsatz: <b>' + mittel + '/' + cfg.nenner + '</b>') +
+        '</span>' +
+      '</span>';
+  var faktorCol = cfg.pauschal
+    ? '<span style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--text-muted);padding:6px 8px;">&ndash;</span>'
+    : '<span><select id="fak_'+pid+'" onchange="calc()" style="width:100%">' + makeFaktorOptions(cfg) + '</select></span>';
+  var nameCell = cfg.fixed
+    ? '<span class="pos-name-cell"><span style="font-size:13px;color:var(--text)">' + cfg.name + '</span><div class="hint">' + cfg.hint + '</div></span>'
+    : '<span class="pos-name-cell"><select onchange="onLeistungChange(\''+pid+'\',this.value)" style="width:100%">' + leistungOpts + '</select><div class="hint" id="hint_'+pid+'">' + cfg.hint + '</div></span>';
+
+  var gwInput = cfg.fixed
+    ? '<input type="number" id="gw_'+pid+'" value="' + cfg.gwDef + '" step="' + cfg.gwStep + '" min="0" oninput="calc()" style="width:100%">'
+    : '<input type="number" id="gw_'+pid+'" value="' + cfg.gwDef + '" step="' + cfg.gwStep + '" min="0"' +
+      (cfg.pauschal||cfg.gw_auto ? ' readonly' : ' oninput="calc()"') +
+      ' style="width:100%' + (cfg.gw_auto ? ';opacity:0.65;border-style:dashed' : '') + '">';
+
+  var removeBtn = cfg.fixed
+    ? '<span></span>'
+    : '<button class="pos-remove" onclick="removePosition(\''+pid+'\' )" title="Entfernen">&times;</button>';
+
+  return (
+    nameCell +
+    tabelleCol +
+    faktorCol +
+    '<span>' +
+      gwInput +
+      '<div class="hint" id="gwlbl_'+pid+'">' + (cfg.gw_auto ? '&#x21BA; aus Anlagen berechnet' : cfg.fixed ? 'Betrag (EUR)' : 'GW in EUR') + '</div>' +
+    '</span>' +
+    '<span class="pos-betrag" id="bet_'+pid+'">0,00</span>' +
+    removeBtn
+  );
+}
+
+function onLeistungChange(pid, lid) {
+  var cfg = leistungMap[lid];
+  document.getElementById('hint_'+pid).innerHTML = cfg.hint;
+  // Faktor-Spalte
+  var fakEl = document.getElementById('fak_'+pid);
+  if (cfg.pauschal) {
+    fakEl.outerHTML = '<span id="fak_'+pid+'" style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--text-muted);padding:6px 8px;">&ndash;</span>';
+  } else {
+    if (fakEl.tagName !== 'SELECT') {
+      fakEl.outerHTML = '<select id="fak_'+pid+'" onchange="calc()" style="width:100%"></select>';
+    }
+    document.getElementById('fak_'+pid).innerHTML = makeFaktorOptions(cfg);
+  }
+  // Tabelle/Rahmen-Spalte
+  var rahmenEl = document.getElementById('rahmen_'+pid);
+  var mittelEl = document.getElementById('mittelhint_'+pid);
+  if (!cfg.pauschal) {
+    var mittel = mittelsatz(cfg.min, cfg.max);
+    var tabName = cfg.tab===tabelleC?'C':cfg.tab===tabelleB?'B':'A';
+    var rahmen = cfg.min+'/'+cfg.nenner+' &ndash; '+cfg.max+'/'+cfg.nenner;
+    if (rahmenEl) rahmenEl.innerHTML = 'Tab.&nbsp;'+tabName+'&nbsp;&bull;&nbsp;'+rahmen;
+    if (mittelEl) mittelEl.innerHTML = 'Mittelsatz: <b>'+mittel+'/'+cfg.nenner+'</b>';
+  }
+  document.getElementById('gwlbl_'+pid).textContent = 'GW in EUR';
+  var gwEl = document.getElementById('gw_'+pid);
+  gwEl.value = cfg.gwDef;
+  gwEl.step = cfg.gwStep;
+  if (cfg.pauschal) { gwEl.setAttribute('readonly',''); gwEl.value = cfg.pauschal; }
+  else { gwEl.removeAttribute('readonly'); }
+  calc();
+}
+
+function removePosition(pid) {
+  var el = document.getElementById(pid);
+  if (el) el.parentNode.removeChild(el);
+  calc();
+}
+
+function fmt(n) {
+  return n.toLocaleString('de-DE', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+// ── Berechnung ──────────────────────────────────────────────────────────────
+function calc() {
+  var rows = document.querySelectorAll('#posList .pos-row');
+  var sumNetto = 0;
+  var resultHTML = '';
+
+  // Auto-GW: Summe aller Anlagen-Gegenstandswerte fuer ESt berechnen
+  var anlageGwSum = 0;
+  rows.forEach(function(row) {
+    var pid = row.id;
+    var sel = row.querySelector('select');
+    var lid = sel ? sel.value : row.getAttribute('data-lid');
+    if (!lid) return;
+    var cfg = leistungMap[lid];
+    if (!cfg) return;
+    if (cfg && cfg.anlage) {
+      var gw = parseFloat(document.getElementById('gw_'+pid).value) || 0;
+      anlageGwSum += gw;
+    }
+  });
+  var autoGw = Math.max(anlageGwSum, 8000);
+
+  // ESt GW-Felder auf Summe setzen
+  rows.forEach(function(row) {
+    var pid = row.id;
+    var sel = row.querySelector('select');
+    var lid = sel ? sel.value : row.getAttribute('data-lid');
+    if (!lid) return;
+    var cfg = leistungMap[lid];
+    if (!cfg) return;
+    if (cfg && cfg.gw_auto) {
+      var gwEl = document.getElementById('gw_'+pid);
+      if (gwEl) gwEl.value = autoGw;
+    }
+  });
+
+  rows.forEach(function(row) {
+    var pid = row.id;
+    var sel = row.querySelector('select');
+    var lid = sel ? sel.value : row.getAttribute('data-lid');
+    if (!lid) return;
+    var cfg = leistungMap[lid];
+    if (!cfg) return;
+    var gw = parseFloat(document.getElementById('gw_'+pid).value) || 0;
+    var fakEl2 = document.getElementById('fak_'+pid);
+    var fak = (fakEl2 && fakEl2.value) ? parseFloat(fakEl2.value) : mittelsatz(cfg.min, cfg.max);
+
+    var netto;
+    if (cfg.pauschal) {
+      netto = parseFloat(document.getElementById('gw_'+pid).value) || cfg.pauschal;
+    } else if (cfg.rvg) {
+      var basisRVG = lookupRVG(gw);
+      netto = basisRVG * fak / 10;
+    } else {
+      var basis = lookup(gw, cfg.tab);
+      netto = basis * fak / cfg.nenner;
+    }
+
+    netto = Math.round(netto * 100) / 100;
+    document.getElementById('bet_'+pid).textContent = fmt(netto);
+    sumNetto += netto;
+
+    var pos_name = (sel && sel.options[sel.selectedIndex]) ? sel.options[sel.selectedIndex].text.replace(/&[a-z]+;/g,'') : cfg.name.replace(/&[a-z]+;/g,'').replace(/&[a-z0-9]+;/g,'');
+    resultHTML += '<div class="result-row"><span class="rl">' +
+      pos_name + (cfg.pauschal ? ' (pauschal)' : cfg.rvg ? ' &middot; GW&nbsp;' + fmt(gw) + '&nbsp;&euro; &middot; ' + (fak/10).toFixed(1).replace('.',',') + '-fach' : ' &middot; GW&nbsp;' + fmt(gw) + '&nbsp;&euro; &middot; ' + fak + '/' + cfg.nenner) +
+      '</span><span class="rv">' + fmt(netto) + '&nbsp;&euro;</span></div>';
+  });
+
+  if (!resultHTML) {
+    resultHTML = '<div class="result-row"><span class="rl">Keine Positionen</span><span class="rv">&ndash;</span></div>';
+  }
+
+  var mwst = Math.round(sumNetto * 0.19 * 100) / 100;
+  var brutto = Math.round((sumNetto + mwst) * 100) / 100;
+
+  resultHTML += '<div class="sep"></div>';
+  resultHTML += '<div class="result-row"><span class="rl">NETTOBETRAG</span><span class="rv">' + fmt(sumNetto) + '&nbsp;&euro;</span></div>';
+  resultHTML += '<div class="result-row"><span class="rl">UMSATZSTEUER 19&nbsp;%</span><span class="rv">' + fmt(mwst) + '&nbsp;&euro;</span></div>';
+
+  document.getElementById('resultRows').innerHTML = resultHTML;
+  document.getElementById('totalVal').textContent = fmt(brutto) + ' EUR';
+}
+
+// ── Feste Positionen (immer am Ende, nicht entfernbar) ─────────────────────
+function addFixedPositions() {
+  ['bescheid','auslagen'].forEach(function(lid) {
+    posCounter++;
+    var pid = 'pos_' + posCounter;
+    var cfg = leistungMap[lid];
+    var row = document.createElement('div');
+    row.className = 'pos-row';
+    row.id = pid;
+    row.setAttribute('data-fixed', 'true');
+    row.setAttribute('data-lid', lid);
+    row.innerHTML = buildRowHTML(pid, lid, cfg);
+    document.getElementById('posList').appendChild(row);
+  });
+  calc();
+}
+
+// addPosition hook: always re-append fixed rows to keep them at bottom
+var _origAdd = addPosition;
+addPosition = function(lid) {
+  // Remove fixed rows temporarily
+  var fixed = [];
+  document.querySelectorAll('#posList [data-fixed]').forEach(function(el){
+    fixed.push(el);
+    el.parentNode.removeChild(el);
+  });
+  _origAdd(lid);
+  // Re-append fixed rows
+  var list = document.getElementById('posList');
+  fixed.forEach(function(el){ list.appendChild(el); });
+};
+
+// ── Start: ESt + Standardpositionen ────────────────────────────────────────
+addPosition('est');
+addPosition('anlage_ngre');
+addFixedPositions();
+</script>
+</body>
+</html>
