@@ -54,7 +54,7 @@ input[type="number"]{-moz-appearance:textfield;appearance:textfield;}
 input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;}
 .hint{font-size:10px;color:var(--text-muted);margin-top:5px;font-family:'IBM Plex Mono',monospace;line-height:1.5;}
 .hint b{color:var(--gold-light);}
-.pos-betrag{font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:right;color:var(--gold-light);}
+.pos-betrag{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:500;text-align:right;color:var(--accent-lt);}
 .pos-remove{width:24px;height:24px;background:transparent;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-left:auto;flex-shrink:0;}
 .pos-remove:hover{border-color:#c0554a;color:#c0554a;}
 .add-btn{display:flex;align-items:center;gap:8px;width:100%;background:transparent;border:1px dashed var(--border);color:var(--text-muted);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px 14px;cursor:pointer;transition:all .2s;margin-top:12px;}
@@ -64,11 +64,11 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
 .result-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;}
 .result-row:last-child{border-bottom:none;}
 .result-row .rl{color:var(--text-muted);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;max-width:68%;}
-.result-row .rv{font-family:'IBM Plex Mono',monospace;font-size:13px;white-space:nowrap;}
+.result-row .rv{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:400;white-space:nowrap;}
 .sep{height:1px;background:var(--border);margin:4px 0;}
 .total-row{display:flex;justify-content:space-between;align-items:baseline;padding-top:18px;border-top:1px solid var(--gold);margin-top:8px;}
-.total-label{font-family:'Playfair Display',serif;font-size:17px;}
-.total-value{font-family:'IBM Plex Mono',monospace;font-size:30px;color:var(--gold-light);font-weight:500;}
+.total-label{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:400;}
+.total-value{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:400;}
 .note{font-size:10px;color:var(--text-muted);margin-top:14px;line-height:1.7;font-family:'IBM Plex Mono',monospace;}
 @media(max-width:680px){
   .pos-header{display:none;}
@@ -117,10 +117,20 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
 </div>
 
 <div class="result-card">
-  <div class="card-title" style="color:var(--gold)">Honor&#xE4;r&#xFC;bersicht</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+    <div class="card-title" style="color:var(--accent);margin-bottom:0;">Honor&#xE4;r&#xFC;bersicht</div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">
+      Umsatzsteuer (19&nbsp;%)
+      <span style="position:relative;display:inline-block;width:36px;height:20px;">
+        <input type="checkbox" id="ustToggle" checked onchange="calc()" style="opacity:0;width:0;height:0;position:absolute;">
+        <span id="ustTrack" style="position:absolute;inset:0;background:#222;border-radius:10px;transition:.2s;cursor:pointer;border:1px solid rgba(255,255,255,0.15);"></span>
+        <span id="ustThumb" style="position:absolute;left:3px;top:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:.2s;pointer-events:none;"></span>
+      </span>
+    </label>
+  </div>
   <div id="resultRows"></div>
   <div class="total-row">
-    <div class="total-label">Gesamt inkl. MwSt.</div>
+    <div class="total-label" id="totalLabel">Gesamtbetrag inkl. Umsatzsteuer</div>
     <div class="total-value" id="totalVal">0,00 EUR</div>
   </div>
   <p class="note">
@@ -414,8 +424,8 @@ function buildRowHTML(pid, lid, cfg) {
   var gwInput = cfg.fixed
     ? '<input type="number" id="gw_'+pid+'" value="' + cfg.gwDef + '" step="' + cfg.gwStep + '" min="0" oninput="calc()" style="width:100%">'
     : '<input type="number" id="gw_'+pid+'" value="' + cfg.gwDef + '" step="' + cfg.gwStep + '" min="0"' +
-      (cfg.pauschal||cfg.gw_auto ? ' readonly' : ' oninput="calc()"') +
-      ' style="width:100%' + (cfg.gw_auto ? ';opacity:0.65;border-style:dashed' : '') + '">';
+      (cfg.pauschal ? ' readonly' : (cfg.gw_auto ? ' oninput="this.dataset.manual=1;calc()"' : ' oninput="calc()"')) +
+      ' style="width:100%' + (cfg.gw_auto ? ';opacity:0.75;border-style:dashed' : '') + '">';
 
   var removeBtn = cfg.fixed
     ? '<span></span>'
@@ -427,7 +437,7 @@ function buildRowHTML(pid, lid, cfg) {
     faktorCol +
     '<span>' +
       gwInput +
-      '<div class="hint" id="gwlbl_'+pid+'">' + (cfg.gw_auto ? '&#x21BA; aus Anlagen berechnet' : cfg.fixed ? 'Betrag (EUR)' : 'GW in EUR') + '</div>' +
+      '<div class="hint" id="gwlbl_'+pid+'">' + (cfg.gw_auto ? '&#x21BA; berechnet &middot; manuell &uuml;berschreibbar' : cfg.fixed ? 'Betrag (EUR)' : 'GW in EUR') + '</div>' +
     '</span>' +
     '<span class="pos-betrag" id="bet_'+pid+'">0,00</span>' +
     removeBtn
@@ -461,6 +471,7 @@ function onLeistungChange(pid, lid) {
   var gwEl = document.getElementById('gw_'+pid);
   gwEl.value = cfg.gwDef;
   gwEl.step = cfg.gwStep;
+  gwEl.dataset.manual = 0;
   if (cfg.pauschal || cfg.gw_auto) {
     gwEl.setAttribute('readonly','');
     gwEl.removeAttribute('oninput');
@@ -473,7 +484,7 @@ function onLeistungChange(pid, lid) {
     gwEl.style.opacity = '';
     gwEl.style.borderStyle = '';
   }
-  document.getElementById('gwlbl_'+pid).textContent = cfg.gw_auto ? '↺ aus Anlagen berechnet' : 'GW in EUR';
+  document.getElementById('gwlbl_'+pid).textContent = cfg.gw_auto ? '↺ berechnet · manuell überschreibbar' : 'GW in EUR';
   calc();
 }
 
@@ -519,7 +530,7 @@ function calc() {
     if (!cfg) return;
     if (cfg && cfg.gw_auto) {
       var gwEl = document.getElementById('gw_'+pid);
-      if (gwEl) gwEl.value = autoGw;
+      if (gwEl && gwEl.dataset.manual !== '1') gwEl.value = autoGw;
     }
   });
 
@@ -559,15 +570,18 @@ function calc() {
     resultHTML = '<div class="result-row"><span class="rl">Keine Positionen</span><span class="rv">&ndash;</span></div>';
   }
 
-  var mwst = Math.round(sumNetto * 0.19 * 100) / 100;
+  var ustAn = document.getElementById('ustToggle') ? document.getElementById('ustToggle').checked : true;
+  var mwst = ustAn ? Math.round(sumNetto * 0.19 * 100) / 100 : 0;
   var brutto = Math.round((sumNetto + mwst) * 100) / 100;
 
   resultHTML += '<div class="sep"></div>';
-  resultHTML += '<div class="result-row"><span class="rl">NETTOBETRAG</span><span class="rv">' + fmt(sumNetto) + '&nbsp;&euro;</span></div>';
-  resultHTML += '<div class="result-row"><span class="rl">UMSATZSTEUER 19&nbsp;%</span><span class="rv">' + fmt(mwst) + '&nbsp;&euro;</span></div>';
+  resultHTML += '<div class="result-row" style="padding:10px 0;border-top:1px solid var(--border);margin-top:4px;"><span class="rv" style="font-size:15px;font-weight:400;">Nettobetrag</span><span class="rv" style="font-size:15px;font-weight:400;">' + fmt(sumNetto) + '&nbsp;&euro;</span></div>';
+  if (ustAn) resultHTML += '<div class="result-row"><span class="rl">Umsatzsteuer 19&nbsp;%</span><span class="rv">' + fmt(mwst) + '&nbsp;&euro;</span></div>';
 
   document.getElementById('resultRows').innerHTML = resultHTML;
   document.getElementById('totalVal').textContent = fmt(brutto) + ' EUR';
+  var lbl = document.getElementById('totalLabel');
+  if (lbl) lbl.textContent = ustAn ? 'Gesamtbetrag inkl. Umsatzsteuer' : 'Gesamtbetrag (netto)';
 }
 
 // ── Feste Positionen (immer am Ende, nicht entfernbar) ─────────────────────
@@ -619,6 +633,18 @@ addPosition('est');
 addPosition('anlage_ngre');
 addPosition('anlage_kap');
 addFixedPositions();
+// Sync toggle visual state
+function syncUstToggle() {
+  var cb = document.getElementById('ustToggle');
+  var track = document.getElementById('ustTrack');
+  var thumb = document.getElementById('ustThumb');
+  if (!cb || !track || !thumb) return;
+  track.style.background = cb.checked ? '#222' : 'var(--surface2)';
+  track.style.border = cb.checked ? '1px solid rgba(255,255,255,0.15)' : '1px solid var(--border)';
+  thumb.style.left = cb.checked ? '19px' : '3px';
+}
+document.getElementById('ustToggle').addEventListener('change', syncUstToggle);
+syncUstToggle();
 </script>
 </body>
 </html>
