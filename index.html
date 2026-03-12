@@ -97,6 +97,10 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
   <div class="badge">StBVV &middot; RVG &mdash; Honorarberechnung</div>
   <h1><span>Honor</span>ly</h1>
   <p class="subtitle">Steuerberaterverg&uuml;tung nach StBVV &amp; RVG &middot; Tabellen A, B &amp; C &middot; inkl. MwSt.</p>
+  <div style="margin-top:16px;display:inline-flex;gap:0;border:1px solid var(--border);">
+    <button id="btn-fassung-alt" onclick="setFassung('alt')" style="background:transparent;border:none;padding:7px 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);cursor:pointer;transition:all .2s;" title="Tabellenwerte bis 30.06.2025">bis 30.06.2025</button>
+    <button id="btn-fassung-neu" onclick="setFassung('neu')" style="background:var(--accent-dim);border:none;padding:7px 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);cursor:pointer;transition:all .2s;" title="Tabellenwerte ab 01.07.2025">ab 01.07.2025</button>
+  </div>
 </header>
 
 <div class="card">
@@ -150,51 +154,160 @@ function setTheme(t) {
 })();
 
 // ── StBVV Tabellen ──────────────────────────────────────────────────────────
-// Tabelle A: volle Gebühr (Basis für 1/10-Satz)
-var tabelleA = [
-  [500,23],[1000,37],[1500,51],[2000,65],[3000,78],[4000,91],[5000,104],
-  [7500,131],[10000,158],[13000,185],[16000,210],[19000,234],[22000,258],
-  [25000,280],[30000,320],[35000,356],[40000,390],[45000,422],[50000,452],
-  [65000,516],[80000,577],[95000,635],[110000,690],[125000,742],[140000,792],
-  [155000,839],[170000,884],[185000,927],[200000,968],[230000,1044],
-  [260000,1116],[290000,1184],[320000,1249],[350000,1311],[400000,1401],
-  [450000,1488],[500000,1571],[600000,1728],[700000,1875],[800000,2014],
-  [900000,2146],[1000000,2272],[1500000,2834],[2000000,3330],[5000000,5555],
-  [10000000,8219]
-];
-// Tabelle B: volle Gebühr (1/20-Satz Basis, ~60% von A)
-var tabelleB = tabelleA.map(function(r){ return [r[0], Math.round(r[1]*0.6)]; });
-// Tabelle C: Buchführung (volle Gebühr, ~80% von A)
-var tabelleC = tabelleA.map(function(r){ return [r[0], Math.round(r[1]*0.8)]; });
+// Zwei Fassungen: alt = bis 30.06.2025 (BGBl. 2020), neu = ab 01.07.2025 (BGBl. 2025 I Nr. 105)
 
-
-// RVG Tabelle §13 (volle Gebühr in EUR)
-var tabelleRVG = [
-  [500,49],[1000,80],[1500,111],[2000,142],[3000,169],[4000,196],[5000,223],
-  [6000,250],[7000,277],[8000,304],[9000,331],[10000,358],[13000,406],
-  [16000,454],[19000,502],[22000,550],[25000,588],[30000,636],[35000,684],
-  [40000,732],[45000,780],[50000,828],[65000,924],[80000,1020],[95000,1116],
-  [110000,1212],[125000,1308],[140000,1404],[155000,1500],[170000,1596],
-  [185000,1692],[200000,1788],[230000,1884],[260000,1980],[290000,2076],
-  [320000,2172],[350000,2268],[400000,2436],[450000,2604],[500000,2772],
-  [600000,3108],[700000,3444],[800000,3780],[900000,4116],[1000000,4452],
-  [1500000,5652],[2000000,6852],[2500000,8052],[3000000,9252],[4000000,11052],
-  [5000000,12852]
+// Tabelle A alt (BGBl. I 2020, 1499-1500) — volle Gebühr 10/10 in EUR
+var tabelleA_alt = [
+  [300,29],[600,53],[900,76],[1200,100],[1500,123],[2000,157],[2500,189],
+  [3000,222],[3500,255],[4000,288],[4500,321],[5000,354],[6000,398],[7000,441],
+  [8000,485],[9000,528],[10000,571],[13000,618],[16000,665],[19000,712],
+  [22000,759],[25000,806],[30000,892],[35000,977],[40000,1061],[45000,1146],
+  [50000,1230],[65000,1320],[80000,1411],[95000,1502],[110000,1593],
+  [125000,1683],[140000,1773],[155000,1864],[170000,1954],[185000,2045],
+  [200000,2136],[230000,2275],[260000,2414],[290000,2552],[320000,2697],
+  [350000,2760],[380000,2821],[410000,2882],[440000,2939],[470000,2995],
+  [500000,3051],[550000,3132],[600000,3211]
 ];
-function lookupRVG(gw) {
-  for (var i=0; i<tabelleRVG.length; i++) {
-    if (gw <= tabelleRVG[i][0]) return tabelleRVG[i][1];
+// Mehrbetrag über 600.000 bis 5 Mio: +141 je ang. 50.000
+// Mehrbetrag 5-25 Mio: +106 je ang. 50.000
+// Mehrbetrag > 25 Mio: +83 je ang. 50.000
+
+// Tabelle A neu (BGBl. 2025 I Nr. 105) — volle Gebühr 10/10 in EUR, ab 01.07.2025
+var tabelleA_neu = [
+  [300,31],[600,56],[900,81],[1200,106],[1500,130],[2000,166],[2500,200],
+  [3000,235],[3500,270],[4000,305],[4500,340],[5000,375],[6000,422],[7000,467],
+  [8000,514],[9000,560],[10000,605],[13000,655],[16000,705],[19000,755],
+  [22000,805],[25000,854],[30000,946],[35000,1036],[40000,1125],[45000,1215],
+  [50000,1304],[65000,1399],[80000,1496],[95000,1592],[110000,1689],
+  [125000,1784],[140000,1879],[155000,1976],[170000,2071],[185000,2168],
+  [200000,2264],[230000,2412],[260000,2559],[290000,2705],[320000,2859],
+  [350000,2926],[380000,2990],[410000,3055],[440000,3115],[470000,3175],
+  [500000,3234],[550000,3320],[600000,3404]
+];
+// Mehrbetrag über 600.000 bis 5 Mio: +149 je ang. 50.000
+// Mehrbetrag 5-25 Mio: +112 je ang. 50.000
+// Mehrbetrag > 25 Mio: +88 je ang. 50.000
+
+// Tabelle B alt (BGBl. I 2020) — Abschlusstabelle, volle Gebühr in EUR
+var tabelleB_alt = [
+  [3000,46],[3500,54],[4000,64],[4500,72],[5000,81],[6000,91],[7000,99],
+  [8000,109],[9000,114],[10000,120],[12500,127],[15000,143],[17500,157],
+  [20000,168],[22500,180],[25000,190],[37500,203],[50000,248],[62500,286],
+  [75000,319],[87500,333],[100000,348],[125000,399],[150000,445],
+  [175000,483],[200000,517],[225000,549],[250000,579],[300000,605],
+  [350000,657],[400000,704],[450000,747],[500000,785],[625000,822],
+  [750000,913],[875000,991],[1000000,1063],[1250000,1127],[1500000,1250],
+  [1750000,1357],[2000000,1456],[2250000,1543],[2500000,1622],[3000000,1697],
+  [3500000,1842],[4000000,1973],[4500000,2090],[5000000,2199]
+];
+
+// Tabelle B neu (BGBl. 2025 I Nr. 105) — ab 01.07.2025
+var tabelleB_neu = [
+  [3000,49],[3500,57],[4000,68],[4500,76],[5000,86],[6000,96],[7000,105],
+  [8000,116],[9000,121],[10000,127],[12500,134],[15000,151],[17500,166],
+  [20000,178],[22500,191],[25000,201],[37500,215],[50000,263],[62500,303],
+  [75000,338],[87500,353],[100000,369],[125000,423],[150000,471],
+  [175000,512],[200000,548],[225000,582],[250000,613],[300000,641],
+  [350000,696],[400000,746],[450000,791],[500000,832],[625000,871],
+  [750000,968],[875000,1050],[1000000,1126],[1250000,1194],[1500000,1324],
+  [1750000,1438],[2000000,1542],[2250000,1635],[2500000,1718],[3000000,1797],
+  [3500000,1951],[4000000,2089],[4500000,2214],[5000000,2328]
+];
+
+// Tabelle C alt (BGBl. I 2020, 1503) — Buchführungstabelle, volle Gebühr in EUR
+var tabelleC_alt = [
+  [15000,68],[17500,75],[20000,83],[22500,88],[25000,95],[30000,102],
+  [35000,110],[40000,115],[45000,122],[50000,130],[62500,137],[75000,149],
+  [87500,164],[100000,177],[125000,197],[150000,217],[200000,259],
+  [250000,299],[300000,339],[350000,381],[400000,416],[450000,448],[500000,483]
+];
+// Mehrbetrag über 500.000: +34 je ang. 50.000
+
+// Tabelle C neu (BGBl. 2025 I Nr. 105) — ab 01.07.2025
+var tabelleC_neu = [
+  [15000,72],[17500,80],[20000,88],[22500,93],[25000,101],[30000,108],
+  [35000,117],[40000,122],[45000,130],[50000,138],[62500,145],[75000,158],
+  [87500,174],[100000,188],[125000,209],[150000,230],[200000,275],
+  [250000,317],[300000,360],[350000,404],[400000,441],[450000,475],[500000,512]
+];
+// Mehrbetrag über 500.000: +36 je ang. 50.000
+
+// RVG §13 alt (bis 31.05.2025, KostRÄG 2021) — volle Gebühr (1,0-fach)
+var tabelleRVG_alt = [
+  [500,49],[1000,88],[1500,127],[2000,166],[3000,222],[4000,278],[5000,334],
+  [6000,390],[7000,446],[8000,502],[9000,558],[10000,614],[13000,666],
+  [16000,718],[19000,770],[22000,822],[25000,874],[30000,955],[35000,1036],
+  [40000,1117],[45000,1198],[50000,1279],[65000,1373],[80000,1467],
+  [95000,1561],[110000,1655],[125000,1749],[140000,1843],[155000,1937],
+  [170000,2031],[185000,2125],[200000,2219],[230000,2351],[260000,2483],
+  [290000,2615],[320000,2747],[350000,2879],[380000,3011],[410000,3143],
+  [440000,3275],[470000,3407],[500000,3539]
+];
+
+// RVG §13 neu (ab 01.06.2025, KostBRÄG 2025) — volle Gebühr (1,0-fach)
+var tabelleRVG_neu = [
+  [500,51.5],[1000,93],[1500,134.5],[2000,176],[3000,235.5],[4000,295],
+  [5000,354.5],[6000,414],[7000,473.5],[8000,533],[9000,592.5],[10000,652],
+  [13000,707],[16000,762],[19000,817],[22000,872],[25000,927],[30000,1013],
+  [35000,1099],[40000,1185],[45000,1271],[50000,1357],[65000,1456.5],
+  [80000,1556],[95000,1655.5],[110000,1755],[125000,1854.5],[140000,1954],
+  [155000,2053.5],[170000,2153],[185000,2252.5],[200000,2352],[230000,2492],
+  [260000,2632],[290000,2772],[320000,2912],[350000,3052],[380000,3192],
+  [410000,3332],[440000,3472],[470000,3612],[500000,3752],[550000,3927],
+  [600000,4102],[650000,4277],[700000,4452],[750000,4627],[800000,4802],
+  [850000,4977],[900000,5152],[950000,5327],[1000000,5502]
+];
+
+// Aktive Tabellen (werden durch Stichtag-Toggle gesetzt)
+var tabelleA = tabelleA_neu;
+var tabelleB = tabelleB_neu;
+var tabelleC = tabelleC_neu;
+var tabelleRVG = tabelleRVG_neu;
+var aktivesFassung = 'neu'; // 'alt' | 'neu'
+
+function setFassung(f) {
+  aktivesFassung = f;
+  if (f === 'alt') {
+    tabelleA = tabelleA_alt; tabelleB = tabelleB_alt;
+    tabelleC = tabelleC_alt; tabelleRVG = tabelleRVG_alt;
+  } else {
+    tabelleA = tabelleA_neu; tabelleB = tabelleB_neu;
+    tabelleC = tabelleC_neu; tabelleRVG = tabelleRVG_neu;
   }
-  var last = tabelleRVG[tabelleRVG.length-1];
-  return last[1] + Math.round((gw - last[0]) / 500000 * 1200);
+  var btnAlt = document.getElementById('btn-fassung-alt');
+  var btnNeu = document.getElementById('btn-fassung-neu');
+  if (btnAlt && btnNeu) {
+    btnAlt.style.background = f==='alt' ? 'var(--accent-dim)' : 'transparent';
+    btnAlt.style.color = f==='alt' ? 'var(--accent)' : 'var(--text-muted)';
+    btnNeu.style.background = f==='neu' ? 'var(--accent-dim)' : 'transparent';
+    btnNeu.style.color = f==='neu' ? 'var(--accent)' : 'var(--text-muted)';
+  }
+  // Update leistungen references
+  leistungen.forEach(function(l) {
+    if (l.tab_key === 'A') l.tab = tabelleA;
+    else if (l.tab_key === 'B') l.tab = tabelleB;
+    else if (l.tab_key === 'C') l.tab = tabelleC;
+    else if (l.tab_key === 'RVG') l.tab = tabelleRVG;
+  });
+  calc();
 }
 
 function lookup(gw, tab) {
   for (var i = 0; i < tab.length; i++) {
     if (gw <= tab[i][0]) return tab[i][1];
   }
+  // Extrapolation für GW > letzten Tabellenwert (600.000 EUR)
+  // Tab A alt: +141 je ang. 50.000 bis 5 Mio, +106 bis 25 Mio, +83 danach
+  // Tab A neu: +149 je ang. 50.000 bis 5 Mio, +112 bis 25 Mio, +88 danach
+  // Tab C alt: +34 je ang. 50.000; Tab C neu: +36 je ang. 50.000
+  // Für B/C: analog
   var last = tab[tab.length-1];
-  return last[1] + Math.round((gw - last[0]) / 1000000 * 2000);
+  var step = (tab === tabelleA_neu || tab === tabelleA) ? 149 :
+             (tab === tabelleA_alt) ? 141 :
+             (tab === tabelleC_neu || tab === tabelleC) ? 36 :
+             (tab === tabelleC_alt) ? 34 : 50; // B fallback
+  var stufen = Math.ceil((gw - last[0]) / 50000);
+  return last[1] + stufen * step;
 }
 
 // ── Leistungskatalog ────────────────────────────────────────────────────────
@@ -202,34 +315,34 @@ function lookup(gw, tab) {
 // schrittweite: 0.5 oder 1 je nach Leistung
 var leistungen = [
   // ── Einkommensteuererklärung ──────────────────────────────────────────────
-  {id:'est',        name:'ESt-Mantelbogen',                      tab:tabelleA, nenner:10, min:1,  max:6,   default:1,    hint:'&sect;24 I Nr.1 StBVV &middot; GW: Summe pos. Eink&uuml;nfte (aus Anlagen), mind. 8.000 &euro;', gwDef:50000,  gwStep:1000, gw_auto:true},
-  {id:'est_beschr', name:'ESt beschr&auml;nkt (kein Wohnsitz D)',tab:tabelleA, nenner:10, min:2,  max:6,   default:2,    hint:'&sect;24 I StBVV &middot; Mantelbogen beschr&auml;nkte Steuerpflicht', gwDef:50000, gwStep:1000, gw_auto:true},
+  {id:'est',        name:'ESt-Mantelbogen',                      tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:6,   default:1,    hint:'&sect;24 I Nr.1 StBVV &middot; GW: Summe pos. Eink&uuml;nfte (aus Anlagen), mind. 8.000 &euro;', gwDef:50000,  gwStep:1000, gw_auto:true},
+  {id:'est_beschr', name:'ESt beschr&auml;nkt (kein Wohnsitz D)',tab:tabelleA, tab_key:'A', nenner:10, min:2,  max:6,   default:2,    hint:'&sect;24 I StBVV &middot; Mantelbogen beschr&auml;nkte Steuerpflicht', gwDef:50000, gwStep:1000, gw_auto:true},
   // ── Anlagen (§27 StBVV, Zwanzigstel) ──────────────────────────────────────
-  {id:'anlage_n',   name:'Anlage N',                             tab:tabelleA, nenner:20, min:1,  max:12,  default:3,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK, mind. 8.000 &euro;', gwDef:40000, gwStep:1000, anlage:true},
-  {id:'anlage_n2',  name:'Anlage N (2 Arbeitgeber)',             tab:tabelleA, nenner:20, min:1,  max:12,  default:5,    hint:'&sect;27 StBVV &middot; erh&ouml;hter Satz bei zwei Arbeitsverh&auml;ltnissen', gwDef:40000, gwStep:1000, anlage:true},
-  {id:'anlage_ngre',name:'Anlage N-Gre/N-AUS',                  tab:tabelleA, nenner:20, min:1,  max:12,  default:4,    hint:'&sect;27 StBVV &middot; Grenzg&auml;nger / Ausl&auml;nder &middot; ab 100.000 &euro; Einkommen 5/20', gwDef:60000, gwStep:1000, anlage:true},
-  {id:'anlage_r_d', name:'Anlage R (deutsch)',                   tab:tabelleA, nenner:20, min:1,  max:6,   default:2,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK', gwDef:20000, gwStep:1000, anlage:true},
-  {id:'anlage_r_ch',name:'Anlage R (Schweiz)',                   tab:tabelleA, nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; Schweizer Rente / DBA', gwDef:20000, gwStep:1000, anlage:true},
-  {id:'anlage_r_mix',name:'Anlage R (gemischt)',                 tab:tabelleA, nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; dt. und ausl. Renten', gwDef:20000, gwStep:1000, anlage:true},
-  {id:'anlage_v',   name:'Anlage V (Vermietung & Verpachtung)',  tab:tabelleA, nenner:20, min:5,  max:7,   default:5,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK &middot; 7/20 bei Neuanschaffung/hoher Belegzahl', gwDef:30000, gwStep:1000, anlage:true},
-  {id:'anlage_kap', name:'Anlage KAP (inl. Bescheinigungen)',    tab:tabelleA, nenner:20, min:1,  max:6,   default:1,    hint:'&sect;27 StBVV &middot; 1-2 Steuerbescheinigungen &middot; GW: Kapitalertr&auml;ge', gwDef:10000, gwStep:500, anlage:true},
-  {id:'anlage_kap_ausl',name:'Anlage KAP (ausl. / mehrere)',     tab:tabelleA, nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; ausl&auml;ndische oder viele Bescheinigungen', gwDef:10000, gwStep:500, anlage:true},
-  {id:'wegzug',     name:'Wegzug aus Deutschland',               tab:tabelleA, nenner:20, min:5,  max:12,  default:5,    hint:'&sect;27 StBVV &middot; Wegzugsbesteuerung &sect;6 AStG', gwDef:80000, gwStep:1000, anlage:true},
+  {id:'anlage_n',   name:'Anlage N',                             tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:3,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK, mind. 8.000 &euro;', gwDef:40000, gwStep:1000, anlage:true},
+  {id:'anlage_n2',  name:'Anlage N (2 Arbeitgeber)',             tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:5,    hint:'&sect;27 StBVV &middot; erh&ouml;hter Satz bei zwei Arbeitsverh&auml;ltnissen', gwDef:40000, gwStep:1000, anlage:true},
+  {id:'anlage_ngre',name:'Anlage N-Gre/N-AUS',                  tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:4,    hint:'&sect;27 StBVV &middot; Grenzg&auml;nger / Ausl&auml;nder &middot; ab 100.000 &euro; Einkommen 5/20', gwDef:60000, gwStep:1000, anlage:true},
+  {id:'anlage_r_d', name:'Anlage R (deutsch)',                   tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:2,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK', gwDef:20000, gwStep:1000, anlage:true},
+  {id:'anlage_r_ch',name:'Anlage R (Schweiz)',                   tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; Schweizer Rente / DBA', gwDef:20000, gwStep:1000, anlage:true},
+  {id:'anlage_r_mix',name:'Anlage R (gemischt)',                 tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; dt. und ausl. Renten', gwDef:20000, gwStep:1000, anlage:true},
+  {id:'anlage_v',   name:'Anlage V (Vermietung & Verpachtung)',  tab:tabelleA, tab_key:'A', nenner:20, min:5,  max:7,   default:5,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK &middot; 7/20 bei Neuanschaffung/hoher Belegzahl', gwDef:30000, gwStep:1000, anlage:true},
+  {id:'anlage_kap', name:'Anlage KAP (inl. Bescheinigungen)',    tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:1,    hint:'&sect;27 StBVV &middot; 1-2 Steuerbescheinigungen &middot; GW: Kapitalertr&auml;ge', gwDef:10000, gwStep:500, anlage:true},
+  {id:'anlage_kap_ausl',name:'Anlage KAP (ausl. / mehrere)',     tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; ausl&auml;ndische oder viele Bescheinigungen', gwDef:10000, gwStep:500, anlage:true},
+  {id:'wegzug',     name:'Wegzug aus Deutschland',               tab:tabelleA, tab_key:'A', nenner:20, min:5,  max:12,  default:5,    hint:'&sect;27 StBVV &middot; Wegzugsbesteuerung &sect;6 AStG', gwDef:80000, gwStep:1000, anlage:true},
   // ── Betriebliche Steuererklärungen ────────────────────────────────────────
-  {id:'ust',        name:'Umsatzsteuererklarung',                tab:tabelleA, nenner:10, min:1,  max:8,   default:2,    hint:'&sect;24 I Nr.2 StBVV &middot; GW: Jahresumsatz', gwDef:200000, gwStep:1000},
-  {id:'gewerbe',    name:'Gewerbesteuererklarung',               tab:tabelleA, nenner:10, min:1,  max:6,   default:2,    hint:'&sect;24 I Nr.1 StBVV &middot; GW: Gewerbeertrag', gwDef:80000, gwStep:1000},
-  {id:'gewinn',     name:'Gewinnermittlung G+E (E&Uuml;R)',      tab:tabelleA, nenner:10, min:5,  max:20,  default:3,    hint:'&sect;25 StBVV &middot; GW: h&ouml;chster Betrag BE/BA, mind. 17.500 &euro;', gwDef:120000, gwStep:1000},
-  {id:'bilanz',     name:'Jahresabschluss / Bilanz',             tab:tabelleB, nenner:10, min:25, max:30,  default:27.5, hint:'&sect;35 StBVV &middot; Tabelle B &middot; GW: Mittel aus berichtigter Bilanzsumme und Jahresleistung', gwDef:500000, gwStep:5000},
-  {id:'buchf',      name:'Laufende Buchf&uuml;hrung (monatl.)', tab:tabelleC, nenner:10, min:2,  max:12,  default:7,    hint:'&sect;33 StBVV &middot; Tabelle C &middot; GW: Monatsumsatz', gwDef:20000, gwStep:500},
-  {id:'kst',        name:'K&ouml;rperschaftsteuer (KSt)',         tab:tabelleA, nenner:10, min:8,  max:20,  default:12,   hint:'&sect;24 StBVV &middot; GW: zu versteuerndes Einkommen', gwDef:100000, gwStep:1000},
-  {id:'ust_va',     name:'USt-Voranmeldung (je Monat)',          tab:tabelleA, nenner:10, min:1,  max:4,   default:2,    hint:'&sect;24 I Nr.2 StBVV &middot; GW: Monatsumsatz', gwDef:20000, gwStep:500},
+  {id:'ust',        name:'Umsatzsteuererklarung',                tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:8,   default:2,    hint:'&sect;24 I Nr.2 StBVV &middot; GW: Jahresumsatz', gwDef:200000, gwStep:1000},
+  {id:'gewerbe',    name:'Gewerbesteuererklarung',               tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:6,   default:2,    hint:'&sect;24 I Nr.1 StBVV &middot; GW: Gewerbeertrag', gwDef:80000, gwStep:1000},
+  {id:'gewinn',     name:'Gewinnermittlung G+E (E&Uuml;R)',      tab:tabelleA, tab_key:'A', nenner:10, min:5,  max:20,  default:3,    hint:'&sect;25 StBVV &middot; GW: h&ouml;chster Betrag BE/BA, mind. 17.500 &euro;', gwDef:120000, gwStep:1000},
+  {id:'bilanz',     name:'Jahresabschluss / Bilanz',             tab:tabelleB, tab_key:'B', nenner:10, min:25, max:30,  default:27.5, hint:'&sect;35 StBVV &middot; Tabelle B &middot; GW: Mittel aus berichtigter Bilanzsumme und Jahresleistung', gwDef:500000, gwStep:5000},
+  {id:'buchf',      name:'Laufende Buchf&uuml;hrung (monatl.)', tab:tabelleC, tab_key:'C', nenner:10, min:2,  max:12,  default:7,    hint:'&sect;33 StBVV &middot; Tabelle C &middot; GW: Monatsumsatz', gwDef:20000, gwStep:500},
+  {id:'kst',        name:'K&ouml;rperschaftsteuer (KSt)',         tab:tabelleA, tab_key:'A', nenner:10, min:8,  max:20,  default:12,   hint:'&sect;24 StBVV &middot; GW: zu versteuerndes Einkommen', gwDef:100000, gwStep:1000},
+  {id:'ust_va',     name:'USt-Voranmeldung (je Monat)',          tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:4,   default:2,    hint:'&sect;24 I Nr.2 StBVV &middot; GW: Monatsumsatz', gwDef:20000, gwStep:500},
   // ── Sonstiges ─────────────────────────────────────────────────────────────
-  {id:'beratung',   name:'Beratung / Gutachten',                 tab:tabelleA, nenner:10, min:1,  max:10,  default:5,    hint:'&sect;21 StBVV &middot; Rahmengeb&uuml;hr &middot; GW: Gegenstandswert', gwDef:50000, gwStep:1000},
-  {id:'einspruch',  name:'Einspruch (&sect;40 StBVV i.V.m. RVG)', tab:tabelleRVG, nenner:10, min:5,  max:25,  default:13,   hint:'&sect;40 StBVV i.V.m. Nr. 2300 VV-RVG &middot; 0,5&ndash;2,5 &middot; GW: festgesetzte Steuer', gwDef:5000, gwStep:500, rvg:true},
-  {id:'beschein',   name:'Bescheinigung / Best&auml;tigung',     tab:tabelleA, nenner:10, min:1,  max:4,   default:2,    hint:'&sect;22 StBVV &middot; GW: Gegenstandswert', gwDef:5000, gwStep:500},
+  {id:'beratung',   name:'Beratung / Gutachten',                 tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:10,  default:5,    hint:'&sect;21 StBVV &middot; Rahmengeb&uuml;hr &middot; GW: Gegenstandswert', gwDef:50000, gwStep:1000},
+  {id:'einspruch',  name:'Einspruch (&sect;40 StBVV i.V.m. RVG)', tab:tabelleRVG, tab_key:'RVG', nenner:10, min:5,  max:25,  default:13,   hint:'&sect;40 StBVV i.V.m. Nr. 2300 VV-RVG &middot; 0,5&ndash;2,5 &middot; GW: festgesetzte Steuer', gwDef:5000, gwStep:500, rvg:true},
+  {id:'beschein',   name:'Bescheinigung / Best&auml;tigung',     tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:4,   default:2,    hint:'&sect;22 StBVV &middot; GW: Gegenstandswert', gwDef:5000, gwStep:500},
   // ── Fest (immer am Ende) ──────────────────────────────────────────────────
-  {id:'bescheid',   name:'Bescheidprüfung',                 tab:tabelleA, nenner:10, min:1,  max:1,   default:1,    hint:'§28 StBVV', gwDef:30, gwStep:1, pauschal:30, fixed:true},
-  {id:'auslagen',   name:'Auslagenpauschale',                    tab:tabelleA, nenner:10, min:1,  max:1,   default:1,    hint:'§16 StBVV', gwDef:20, gwStep:1, pauschal:20, fixed:true},
+  {id:'bescheid',   name:'Bescheidprüfung',                 tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:1,   default:1,    hint:'§28 StBVV', gwDef:30, gwStep:1, pauschal:30, fixed:true},
+  {id:'auslagen',   name:'Auslagenpauschale',                    tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:1,   default:1,    hint:'§16 StBVV', gwDef:20, gwStep:1, pauschal:20, fixed:true},
 ];
 
 var leistungMap = {};
