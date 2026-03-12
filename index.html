@@ -44,7 +44,7 @@ h1 span{color:var(--gold);}
 .card-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:18px;}
 /* Table header */
 .pos-header{display:grid;grid-template-columns:2.4fr 1.1fr 1fr 1fr 90px 28px;gap:8px;padding:6px 12px;font-size:9px;font-family:'IBM Plex Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border);}
-.pos-row{display:grid;grid-template-columns:2.4fr 1.1fr 1fr 1fr 90px 28px;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border);transition:background .15s;}
+.pos-row{display:grid;grid-template-columns:2.4fr 1.1fr 1fr 1fr 90px 28px;gap:8px;align-items:start;padding:10px 12px;border-bottom:1px solid var(--border);transition:background .15s;}
 .pos-row:hover{background:rgba(128,128,128,0.04);}
 .pos-row:last-child{border-bottom:none;}
 /* Form elements */
@@ -316,6 +316,17 @@ function lookup(gw, tab) {
   return last[1] + stufen * step;
 }
 
+function lookupRVG(gw) {
+  var tab = tabelleRVG;
+  for (var i = 0; i < tab.length; i++) {
+    if (gw <= tab[i][0]) return tab[i][1];
+  }
+  // Extrapolation über letzten Tabellenwert
+  var last = tab[tab.length-1];
+  var stufen = Math.ceil((gw - last[0]) / 50000);
+  return last[1] + stufen * 175; // ca. Anstieg je 50k bei RVG neu
+}
+
 // ── Leistungskatalog ────────────────────────────────────────────────────────
 // nenner: Teiler des Faktors (10 oder 20) – Mittelsatz = (min+max)/2 (Dezimal erlaubt)
 // schrittweite: 0.5 oder 1 je nach Leistung
@@ -326,28 +337,27 @@ var leistungen = [
   // ── Anlagen (§27 StBVV, Zwanzigstel) ──────────────────────────────────────
   {id:'anlage_n',   name:'Anlage N',                             tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:3,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK, mind. 8.000 &euro;', gwDef:50000, gwStep:1000, anlage:true},
   {id:'anlage_n2',  name:'Anlage N (2 Arbeitgeber)',             tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:5,    hint:'&sect;27 StBVV &middot; erh&ouml;hter Satz bei zwei Arbeitsverh&auml;ltnissen', gwDef:50000, gwStep:1000, anlage:true},
-  {id:'anlage_ngre',name:'Anlage N-Gre/N-AUS',                  tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:4,    hint:'&sect;27 StBVV &middot; Grenzg&auml;nger / Ausl&auml;nder &middot; ab 100.000 &euro; Einkommen 5/20', gwDef:80000, gwStep:1000, anlage:true},
+  {id:'anlage_ngre',name:'Anlage N-Gre/N-AUS',                  tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:4,    hint:'&sect;27 StBVV &middot; Grenzg&auml;nger', gwDef:80000, gwStep:1000, anlage:true},
+  {id:'anlage_kap', name:'Anlage KAP (inl. Bescheinigungen)',    tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:1,    hint:'&sect;27 StBVV &middot; 1-2 Steuerbescheinigungen &middot; GW: Kapitalertr&auml;ge', gwDef:8000, gwStep:500, anlage:true},
+  {id:'anlage_kap_ausl',name:'Anlage KAP (ausl. / mehrere)',     tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:3,    hint:'&sect;27 StBVV &middot; ausl&auml;ndische oder viele Bescheinigungen', gwDef:8000, gwStep:500, anlage:true},
+  {id:'anlage_v',   name:'Anlage V (Vermietung & Verpachtung)',  tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:5,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK &middot; 7/20 bei Neuanschaffung/hoher Belegzahl', gwDef:8000, gwStep:1000, anlage:true},
   {id:'anlage_r_d', name:'Anlage R (deutsch)',                   tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:2,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK', gwDef:8000, gwStep:1000, anlage:true},
   {id:'anlage_r_ch',name:'Anlage R (Schweiz)',                   tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; Schweizer Rente / DBA', gwDef:8000, gwStep:1000, anlage:true},
   {id:'anlage_r_mix',name:'Anlage R (gemischt)',                 tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; dt. und ausl. Renten', gwDef:8000, gwStep:1000, anlage:true},
-  {id:'anlage_v',   name:'Anlage V (Vermietung & Verpachtung)',  tab:tabelleA, tab_key:'A', nenner:20, min:5,  max:7,   default:5,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK &middot; 7/20 bei Neuanschaffung/hoher Belegzahl', gwDef:8000, gwStep:1000, anlage:true},
-  {id:'anlage_kap', name:'Anlage KAP (inl. Bescheinigungen)',    tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:1,    hint:'&sect;27 StBVV &middot; 1-2 Steuerbescheinigungen &middot; GW: Kapitalertr&auml;ge', gwDef:8000, gwStep:500, anlage:true},
-  {id:'anlage_kap_ausl',name:'Anlage KAP (ausl. / mehrere)',     tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; ausl&auml;ndische oder viele Bescheinigungen', gwDef:8000, gwStep:500, anlage:true},
-  {id:'wegzug',     name:'Wegzug aus Deutschland',               tab:tabelleA, tab_key:'A', nenner:20, min:5,  max:12,  default:5,    hint:'&sect;27 StBVV &middot; Wegzugsbesteuerung &sect;6 AStG', gwDef:80000, gwStep:1000, anlage:true},
+  {id:'anlage_so',  name:'Anlage SO (Sonstige Eink&uuml;nfte)',  tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:2,  hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK', gwDef:8000, gwStep:500, anlage:true},
   // ── Betriebliche Steuererklärungen ────────────────────────────────────────
-  {id:'ust',        name:'Umsatzsteuererklarung',                tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:8,   default:2,    hint:'&sect;24 I Nr.2 StBVV &middot; GW: Jahresumsatz', gwDef:200000, gwStep:1000},
+  {id:'gewinn',     name:'Gewinnermittlung G+E (E&Uuml;R)',      tab:tabelleA, tab_key:'A', nenner:20, min:5,  max:30,  default:17.5, hint:'&sect;25 StBVV &middot; GW: h&ouml;chster Betrag BE/BA, mind. 17.500 &euro;', gwDef:17500, gwStep:1000},
+  {id:'bilanz',     name:'Jahresabschluss / Bilanz',             tab:tabelleB, tab_key:'B', nenner:20, min:10, max:40,  default:25,   hint:'&sect;35 StBVV &middot; Tabelle B &middot; GW: Mittel aus berichtigter Bilanzsumme und Jahresleistung', gwDef:500000, gwStep:5000},
+  {id:'kst',        name:'K&ouml;rperschaftsteuer (KSt)',         tab:tabelleA, tab_key:'A', nenner:10, min:2,  max:8,   default:5,    hint:'&sect;24 StBVV &middot; GW: zu versteuerndes Einkommen', gwDef:100000, gwStep:1000},
   {id:'gewerbe',    name:'Gewerbesteuererklarung',               tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:6,   default:2,    hint:'&sect;24 I Nr.1 StBVV &middot; GW: Gewerbeertrag', gwDef:80000, gwStep:1000},
-  {id:'gewinn',     name:'Gewinnermittlung G+E (E&Uuml;R)',      tab:tabelleA, tab_key:'A', nenner:10, min:5,  max:20,  default:3,    hint:'&sect;25 StBVV &middot; GW: h&ouml;chster Betrag BE/BA, mind. 17.500 &euro;', gwDef:17500, gwStep:1000},
-  {id:'bilanz',     name:'Jahresabschluss / Bilanz',             tab:tabelleB, tab_key:'B', nenner:10, min:25, max:30,  default:27.5, hint:'&sect;35 StBVV &middot; Tabelle B &middot; GW: Mittel aus berichtigter Bilanzsumme und Jahresleistung', gwDef:500000, gwStep:5000},
-  {id:'buchf',      name:'Laufende Buchf&uuml;hrung (monatl.)', tab:tabelleC, tab_key:'C', nenner:10, min:2,  max:12,  default:7,    hint:'&sect;33 StBVV &middot; Tabelle C &middot; GW: Monatsumsatz', gwDef:15000, gwStep:500},
-  {id:'kst',        name:'K&ouml;rperschaftsteuer (KSt)',         tab:tabelleA, tab_key:'A', nenner:10, min:8,  max:20,  default:12,   hint:'&sect;24 StBVV &middot; GW: zu versteuerndes Einkommen', gwDef:100000, gwStep:1000},
+  {id:'ust',        name:'Umsatzsteuererklarung',                tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:8,   default:2,    hint:'&sect;24 I Nr.2 StBVV &middot; GW: Jahresumsatz', gwDef:200000, gwStep:1000},
   {id:'ust_va',     name:'USt-Voranmeldung (je Monat)',          tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:4,   default:2,    hint:'&sect;24 I Nr.2 StBVV &middot; GW: Monatsumsatz', gwDef:20000, gwStep:500},
+  {id:'buchf',      name:'Laufende Buchf&uuml;hrung (monatl.)', tab:tabelleC, tab_key:'C', nenner:10, min:2,  max:12,  default:7,    hint:'&sect;33 StBVV &middot; Tabelle C &middot; GW: Monatsumsatz', gwDef:15000, gwStep:500},
   // ── Sonstiges ─────────────────────────────────────────────────────────────
-  {id:'beratung',   name:'Beratung / Gutachten',                 tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:10,  default:5,    hint:'&sect;21 StBVV &middot; Rahmengeb&uuml;hr &middot; GW: Gegenstandswert', gwDef:50000, gwStep:1000},
-  {id:'einspruch',  name:'Einspruch (&sect;40 StBVV i.V.m. RVG)', tab:tabelleRVG, tab_key:'RVG', nenner:10, min:5,  max:25,  default:13,   hint:'&sect;40 StBVV i.V.m. Nr. 2300 VV-RVG &middot; 0,5&ndash;2,5 &middot; GW: festgesetzte Steuer', gwDef:5000, gwStep:500, rvg:true},
-  {id:'beschein',   name:'Bescheinigung / Best&auml;tigung',     tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:4,   default:2,    hint:'&sect;22 StBVV &middot; GW: Gegenstandswert', gwDef:5000, gwStep:500},
+  {id:'beratung',   name:'Beratung Auftr&auml;ge (Zeitaufwand)',tab:tabelleA, tab_key:'A', nenner:10, min:0.5,max:20,  default:1,    hint:'Zeitabrechnung &middot; Stundensatz unter Gegenstandswert eintragen', gwDef:160, gwStep:10, zeit:true},
+  {id:'einspruch',  name:'Rechtsbehelfsverfahren (Einspruch)',           tab:tabelleRVG, tab_key:'RVG', nenner:10, min:5,  max:25,  default:15,   hint:'Nr. 2300 VV-RVG &middot; Rahmen: 0,5&ndash;2,5-fach &middot; Mittelgeb&uuml;hr: 1,5-fach &middot; GW: festgesetzte Steuer', gwDef:5000, gwStep:500, rvg:true},
   // ── Fest (immer am Ende) ──────────────────────────────────────────────────
-  {id:'bescheid',   name:'Bescheidprüfung',                 tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:1,   default:1,    hint:'§28 StBVV', gwDef:30, gwStep:1, pauschal:30, fixed:true},
+  {id:'bescheid',   name:'Bescheidpr&uuml;fung',            tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:1,   default:1,    hint:'&sect;28 StBVV &middot; Anzahl &times; Betrag je Bescheid', gwDef:30, gwStep:1, bescheid:true, fixed:true},
   {id:'auslagen',   name:'Auslagenpauschale',                    tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:1,   default:1,    hint:'§16 StBVV', gwDef:20, gwStep:1, pauschal:20, fixed:true},
 ];
 
@@ -405,18 +415,27 @@ function buildRowHTML(pid, lid, cfg) {
   var rahmen = cfg.min + '/' + cfg.nenner + ' &ndash; ' + cfg.max + '/' + cfg.nenner;
   var tabName = cfg.tab===tabelleC?'C':cfg.tab===tabelleB?'B':'A';
   var tabelleCol = cfg.pauschal
-    ? '<span style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--text-muted)">Pauschal</span>'
-    : '<span style="display:flex;flex-direction:column;justify-content:center">' +
-        '<span style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--gold)" id="rahmen_'+pid+'">Tab.&nbsp;' + tabName + '&nbsp;&bull;&nbsp;' + rahmen + '</span>' +
-        '<span class="hint" id="mittelhint_'+pid+'">' +
-        (cfg.rvg
-          ? 'Regelwert: <b>1,3-fach</b> &middot; Rahmen: 0,5&ndash;2,5'
-          : 'Mittelsatz: <b>' + mittel + '/' + cfg.nenner + '</b>') +
-        '</span>' +
-      '</span>';
+    ? '<span style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--text-muted)">pauschal</span>'
+    : cfg.bescheid
+      ? '<span style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--text-muted)">pauschal</span>'
+    : cfg.zeit
+      ? '<span style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--gold)">Zeitabrechnung</span>'
+      : '<span style="display:flex;flex-direction:column;justify-content:center">' +
+          '<span style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--gold)" id="rahmen_'+pid+'">Tab.&nbsp;' + tabName + '&nbsp;&bull;&nbsp;' + rahmen + '</span>' +
+          '<span class="hint" id="mittelhint_'+pid+'">' +
+          (cfg.rvg
+            ? 'Regelwert: <b>1,3-fach</b> &middot; Rahmen: 0,5&ndash;2,5'
+            : 'Mittelsatz: <b>' + mittel + '/' + cfg.nenner + '</b>') +
+          '</span>' +
+        '</span>';
+  var defVal = cfg.default !== undefined ? cfg.default : mittelsatz(cfg.min, cfg.max);
   var faktorCol = cfg.pauschal
     ? '<span style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--text-muted);padding:6px 8px;">&ndash;</span>'
-    : '<span><select id="fak_'+pid+'" onchange="calc()" style="width:100%">' + makeFaktorOptions(cfg) + '</select></span>';
+    : cfg.bescheid
+      ? '<span><input type="number" id="fak_'+pid+'" value="1" min="1" step="1" oninput="calc()" style="width:100%"><div class="hint">Anzahl</div></span>'
+    : cfg.zeit
+      ? '<span><input type="number" id="fak_'+pid+'" value="'+defVal+'" min="0.5" step="0.5" oninput="calc()" style="width:100%"><div class="hint">Stunden</div></span>'
+      : '<span><input type="number" id="fak_'+pid+'" value="'+defVal+'" min="'+cfg.min+'" max="'+cfg.max+'" step="0.5" oninput="clampFak(this,'+cfg.min+','+cfg.max+');calc()" style="width:100%"></span>';
   var nameCell = cfg.fixed
     ? '<span class="pos-name-cell"><span style="font-size:13px;color:var(--text)">' + cfg.name + '</span><div class="hint">' + cfg.hint + '</div></span>'
     : '<span class="pos-name-cell"><select onchange="onLeistungChange(\''+pid+'\',this.value)" style="width:100%">' + leistungOpts + '</select><div class="hint" id="hint_'+pid+'">' + cfg.hint + '</div></span>';
@@ -437,7 +456,7 @@ function buildRowHTML(pid, lid, cfg) {
     faktorCol +
     '<span>' +
       gwInput +
-      '<div class="hint" id="gwlbl_'+pid+'">' + (cfg.gw_auto ? '&#x21BA; berechnet &middot; manuell &uuml;berschreibbar' : cfg.fixed ? 'Betrag (EUR)' : 'GW in EUR') + '</div>' +
+      '<div class="hint" id="gwlbl_'+pid+'">' + (cfg.gw_auto ? '&#x21BA; berechnet &middot; manuell &uuml;berschreibbar' : cfg.bescheid ? 'Betrag je Bescheid (€)' : cfg.fixed ? 'Betrag (EUR)' : cfg.zeit ? 'Stundensatz (€/h)' : 'GW in EUR') + '</div>' +
     '</span>' +
     '<span class="pos-betrag" id="bet_'+pid+'">0,00</span>' +
     removeBtn
@@ -446,45 +465,10 @@ function buildRowHTML(pid, lid, cfg) {
 
 function onLeistungChange(pid, lid) {
   var cfg = leistungMap[lid];
-  document.getElementById('hint_'+pid).innerHTML = cfg.hint;
-  // Faktor-Spalte
-  var fakEl = document.getElementById('fak_'+pid);
-  if (cfg.pauschal) {
-    fakEl.outerHTML = '<span id="fak_'+pid+'" style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--text-muted);padding:6px 8px;">&ndash;</span>';
-  } else {
-    if (fakEl.tagName !== 'SELECT') {
-      fakEl.outerHTML = '<select id="fak_'+pid+'" onchange="calc()" style="width:100%"></select>';
-    }
-    document.getElementById('fak_'+pid).innerHTML = makeFaktorOptions(cfg);
-  }
-  // Tabelle/Rahmen-Spalte
-  var rahmenEl = document.getElementById('rahmen_'+pid);
-  var mittelEl = document.getElementById('mittelhint_'+pid);
-  if (!cfg.pauschal) {
-    var mittel = mittelsatz(cfg.min, cfg.max);
-    var tabName = cfg.tab===tabelleC?'C':cfg.tab===tabelleB?'B':'A';
-    var rahmen = cfg.min+'/'+cfg.nenner+' &ndash; '+cfg.max+'/'+cfg.nenner;
-    if (rahmenEl) rahmenEl.innerHTML = 'Tab.&nbsp;'+tabName+'&nbsp;&bull;&nbsp;'+rahmen;
-    if (mittelEl) mittelEl.innerHTML = 'Mittelsatz: <b>'+mittel+'/'+cfg.nenner+'</b>';
-  }
-  document.getElementById('gwlbl_'+pid).textContent = 'GW in EUR';
-  var gwEl = document.getElementById('gw_'+pid);
-  gwEl.value = cfg.gwDef;
-  gwEl.step = cfg.gwStep;
-  gwEl.dataset.manual = 0;
-  if (cfg.pauschal || cfg.gw_auto) {
-    gwEl.setAttribute('readonly','');
-    gwEl.removeAttribute('oninput');
-    if (cfg.pauschal) gwEl.value = cfg.pauschal;
-    gwEl.style.opacity = cfg.gw_auto ? '0.65' : '';
-    gwEl.style.borderStyle = cfg.gw_auto ? 'dashed' : '';
-  } else {
-    gwEl.removeAttribute('readonly');
-    gwEl.setAttribute('oninput','calc()');
-    gwEl.style.opacity = '';
-    gwEl.style.borderStyle = '';
-  }
-  document.getElementById('gwlbl_'+pid).textContent = cfg.gw_auto ? '↺ berechnet · manuell überschreibbar' : 'GW in EUR';
+  var row = document.getElementById(pid);
+  if (!row) return;
+  // Rebuild entire row HTML, preserving the leistung select value
+  row.innerHTML = buildRowHTML(pid, lid, cfg);
   calc();
 }
 
@@ -496,6 +480,17 @@ function removePosition(pid) {
 
 function fmt(n) {
   return n.toLocaleString('de-DE', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+// ── Faktor-Eingabe clampen ─────────────────────────────────────────────────
+function clampFak(el, mn, mx) {
+  var v = parseFloat(el.value);
+  if (isNaN(v)) return;
+  // snap to nearest 0.5
+  v = Math.round(v * 2) / 2;
+  if (v < mn) v = mn;
+  if (v > mx) v = mx;
+  el.value = v;
 }
 
 // ── Berechnung ──────────────────────────────────────────────────────────────
@@ -546,8 +541,13 @@ function calc() {
     var fak = (fakEl2 && fakEl2.value) ? parseFloat(fakEl2.value) : mittelsatz(cfg.min, cfg.max);
 
     var netto;
-    if (cfg.pauschal) {
+    if (cfg.bescheid) {
+      var anzahl = parseFloat(document.getElementById('fak_'+pid) ? document.getElementById('fak_'+pid).value : 1) || 1;
+      netto = anzahl * gw;
+    } else if (cfg.pauschal) {
       netto = parseFloat(document.getElementById('gw_'+pid).value) || cfg.pauschal;
+    } else if (cfg.zeit) {
+      netto = gw * fak; // gw = Stundensatz, fak = Stunden
     } else if (cfg.rvg) {
       var basisRVG = lookupRVG(gw);
       netto = basisRVG * fak / 10;
@@ -562,7 +562,7 @@ function calc() {
 
     var pos_name = (sel && sel.options[sel.selectedIndex]) ? sel.options[sel.selectedIndex].text.replace(/&[a-z]+;/g,'') : cfg.name.replace(/&[a-z]+;/g,'').replace(/&[a-z0-9]+;/g,'');
     resultHTML += '<div class="result-row"><span class="rl">' +
-      pos_name + (cfg.pauschal ? ' (pauschal)' : cfg.rvg ? ' &middot; GW&nbsp;' + fmt(gw) + '&nbsp;&euro; &middot; ' + (fak/10).toFixed(1).replace('.',',') + '-fach' : ' &middot; GW&nbsp;' + fmt(gw) + '&nbsp;&euro; &middot; ' + fak + '/' + cfg.nenner) +
+      pos_name + (cfg.bescheid ? ' &middot; ' + (parseFloat(document.getElementById('fak_'+pid) ? document.getElementById('fak_'+pid).value : 1)||1) + '&nbsp;&times;&nbsp;' + fmt(gw) + '&nbsp;&euro;' : cfg.pauschal ? ' (pauschal)' : cfg.zeit ? ' &middot; ' + fak.toString().replace('.',',') + '&nbsp;h &middot; ' + fmt(gw) + '&nbsp;&euro;/h' : cfg.rvg ? ' &middot; GW&nbsp;' + fmt(gw) + '&nbsp;&euro; &middot; ' + (fak/10).toFixed(1).replace('.',',') + '-fach' : ' &middot; GW&nbsp;' + fmt(gw) + '&nbsp;&euro; &middot; ' + fak + '/' + cfg.nenner) +
       '</span><span class="rv">' + fmt(netto) + '&nbsp;&euro;</span></div>';
   });
 
