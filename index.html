@@ -114,10 +114,6 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
     <span></span>
   </div>
   <div id="posList"></div>
-  <button class="add-btn" onclick="addPosition()">
-    <span style="width:18px;height:18px;border:1px solid currentColor;display:inline-flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">+</span>
-    Position hinzuf&#xFC;gen
-  </button>
 </div>
 
 <div class="result-card">
@@ -318,22 +314,22 @@ var leistungen = [
   {id:'est',        name:'ESt-Mantelbogen',                      tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:6,   default:1,    hint:'&sect;24 I Nr.1 StBVV &middot; GW: Summe pos. Eink&uuml;nfte (aus Anlagen), mind. 8.000 &euro;', gwDef:50000,  gwStep:1000, gw_auto:true},
   {id:'est_beschr', name:'ESt beschr&auml;nkt (kein Wohnsitz D)',tab:tabelleA, tab_key:'A', nenner:10, min:2,  max:6,   default:2,    hint:'&sect;24 I StBVV &middot; Mantelbogen beschr&auml;nkte Steuerpflicht', gwDef:50000, gwStep:1000, gw_auto:true},
   // ── Anlagen (§27 StBVV, Zwanzigstel) ──────────────────────────────────────
-  {id:'anlage_n',   name:'Anlage N',                             tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:3,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK, mind. 8.000 &euro;', gwDef:40000, gwStep:1000, anlage:true},
-  {id:'anlage_n2',  name:'Anlage N (2 Arbeitgeber)',             tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:5,    hint:'&sect;27 StBVV &middot; erh&ouml;hter Satz bei zwei Arbeitsverh&auml;ltnissen', gwDef:40000, gwStep:1000, anlage:true},
-  {id:'anlage_ngre',name:'Anlage N-Gre/N-AUS',                  tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:4,    hint:'&sect;27 StBVV &middot; Grenzg&auml;nger / Ausl&auml;nder &middot; ab 100.000 &euro; Einkommen 5/20', gwDef:60000, gwStep:1000, anlage:true},
-  {id:'anlage_r_d', name:'Anlage R (deutsch)',                   tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:2,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK', gwDef:20000, gwStep:1000, anlage:true},
-  {id:'anlage_r_ch',name:'Anlage R (Schweiz)',                   tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; Schweizer Rente / DBA', gwDef:20000, gwStep:1000, anlage:true},
-  {id:'anlage_r_mix',name:'Anlage R (gemischt)',                 tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; dt. und ausl. Renten', gwDef:20000, gwStep:1000, anlage:true},
-  {id:'anlage_v',   name:'Anlage V (Vermietung & Verpachtung)',  tab:tabelleA, tab_key:'A', nenner:20, min:5,  max:7,   default:5,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK &middot; 7/20 bei Neuanschaffung/hoher Belegzahl', gwDef:30000, gwStep:1000, anlage:true},
-  {id:'anlage_kap', name:'Anlage KAP (inl. Bescheinigungen)',    tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:1,    hint:'&sect;27 StBVV &middot; 1-2 Steuerbescheinigungen &middot; GW: Kapitalertr&auml;ge', gwDef:10000, gwStep:500, anlage:true},
-  {id:'anlage_kap_ausl',name:'Anlage KAP (ausl. / mehrere)',     tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; ausl&auml;ndische oder viele Bescheinigungen', gwDef:10000, gwStep:500, anlage:true},
+  {id:'anlage_n',   name:'Anlage N',                             tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:3,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK, mind. 8.000 &euro;', gwDef:50000, gwStep:1000, anlage:true},
+  {id:'anlage_n2',  name:'Anlage N (2 Arbeitgeber)',             tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:5,    hint:'&sect;27 StBVV &middot; erh&ouml;hter Satz bei zwei Arbeitsverh&auml;ltnissen', gwDef:50000, gwStep:1000, anlage:true},
+  {id:'anlage_ngre',name:'Anlage N-Gre/N-AUS',                  tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:12,  default:4,    hint:'&sect;27 StBVV &middot; Grenzg&auml;nger / Ausl&auml;nder &middot; ab 100.000 &euro; Einkommen 5/20', gwDef:80000, gwStep:1000, anlage:true},
+  {id:'anlage_r_d', name:'Anlage R (deutsch)',                   tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:2,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK', gwDef:8000, gwStep:1000, anlage:true},
+  {id:'anlage_r_ch',name:'Anlage R (Schweiz)',                   tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; Schweizer Rente / DBA', gwDef:8000, gwStep:1000, anlage:true},
+  {id:'anlage_r_mix',name:'Anlage R (gemischt)',                 tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; dt. und ausl. Renten', gwDef:8000, gwStep:1000, anlage:true},
+  {id:'anlage_v',   name:'Anlage V (Vermietung & Verpachtung)',  tab:tabelleA, tab_key:'A', nenner:20, min:5,  max:7,   default:5,    hint:'&sect;27 StBVV &middot; GW: h&ouml;chster Betrag Einnahmen/WK &middot; 7/20 bei Neuanschaffung/hoher Belegzahl', gwDef:8000, gwStep:1000, anlage:true},
+  {id:'anlage_kap', name:'Anlage KAP (inl. Bescheinigungen)',    tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:1,    hint:'&sect;27 StBVV &middot; 1-2 Steuerbescheinigungen &middot; GW: Kapitalertr&auml;ge', gwDef:8000, gwStep:500, anlage:true},
+  {id:'anlage_kap_ausl',name:'Anlage KAP (ausl. / mehrere)',     tab:tabelleA, tab_key:'A', nenner:20, min:1,  max:6,   default:3,    hint:'&sect;27 StBVV &middot; ausl&auml;ndische oder viele Bescheinigungen', gwDef:8000, gwStep:500, anlage:true},
   {id:'wegzug',     name:'Wegzug aus Deutschland',               tab:tabelleA, tab_key:'A', nenner:20, min:5,  max:12,  default:5,    hint:'&sect;27 StBVV &middot; Wegzugsbesteuerung &sect;6 AStG', gwDef:80000, gwStep:1000, anlage:true},
   // ── Betriebliche Steuererklärungen ────────────────────────────────────────
   {id:'ust',        name:'Umsatzsteuererklarung',                tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:8,   default:2,    hint:'&sect;24 I Nr.2 StBVV &middot; GW: Jahresumsatz', gwDef:200000, gwStep:1000},
   {id:'gewerbe',    name:'Gewerbesteuererklarung',               tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:6,   default:2,    hint:'&sect;24 I Nr.1 StBVV &middot; GW: Gewerbeertrag', gwDef:80000, gwStep:1000},
-  {id:'gewinn',     name:'Gewinnermittlung G+E (E&Uuml;R)',      tab:tabelleA, tab_key:'A', nenner:10, min:5,  max:20,  default:3,    hint:'&sect;25 StBVV &middot; GW: h&ouml;chster Betrag BE/BA, mind. 17.500 &euro;', gwDef:120000, gwStep:1000},
+  {id:'gewinn',     name:'Gewinnermittlung G+E (E&Uuml;R)',      tab:tabelleA, tab_key:'A', nenner:10, min:5,  max:20,  default:3,    hint:'&sect;25 StBVV &middot; GW: h&ouml;chster Betrag BE/BA, mind. 17.500 &euro;', gwDef:17500, gwStep:1000},
   {id:'bilanz',     name:'Jahresabschluss / Bilanz',             tab:tabelleB, tab_key:'B', nenner:10, min:25, max:30,  default:27.5, hint:'&sect;35 StBVV &middot; Tabelle B &middot; GW: Mittel aus berichtigter Bilanzsumme und Jahresleistung', gwDef:500000, gwStep:5000},
-  {id:'buchf',      name:'Laufende Buchf&uuml;hrung (monatl.)', tab:tabelleC, tab_key:'C', nenner:10, min:2,  max:12,  default:7,    hint:'&sect;33 StBVV &middot; Tabelle C &middot; GW: Monatsumsatz', gwDef:20000, gwStep:500},
+  {id:'buchf',      name:'Laufende Buchf&uuml;hrung (monatl.)', tab:tabelleC, tab_key:'C', nenner:10, min:2,  max:12,  default:7,    hint:'&sect;33 StBVV &middot; Tabelle C &middot; GW: Monatsumsatz', gwDef:15000, gwStep:500},
   {id:'kst',        name:'K&ouml;rperschaftsteuer (KSt)',         tab:tabelleA, tab_key:'A', nenner:10, min:8,  max:20,  default:12,   hint:'&sect;24 StBVV &middot; GW: zu versteuerndes Einkommen', gwDef:100000, gwStep:1000},
   {id:'ust_va',     name:'USt-Voranmeldung (je Monat)',          tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:4,   default:2,    hint:'&sect;24 I Nr.2 StBVV &middot; GW: Monatsumsatz', gwDef:20000, gwStep:500},
   // ── Sonstiges ─────────────────────────────────────────────────────────────
@@ -381,7 +377,7 @@ var posCounter = 0;
 function addPosition(presetId) {
   posCounter++;
   var pid = 'pos_' + posCounter;
-  var lid = presetId || 'est';
+  var lid = presetId || 'anlage_n';
   var cfg = leistungMap[lid];
   var row = document.createElement('div');
   row.className = 'pos-row';
@@ -576,6 +572,16 @@ function calc() {
 
 // ── Feste Positionen (immer am Ende, nicht entfernbar) ─────────────────────
 function addFixedPositions() {
+  // Insert "Position hinzufügen" button before fixed rows
+  var existingBtn = document.getElementById('add-pos-btn');
+  if (!existingBtn) {
+    var btn = document.createElement('button');
+    btn.className = 'add-btn';
+    btn.id = 'add-pos-btn';
+    btn.innerHTML = '<span style="width:18px;height:18px;border:1px solid currentColor;display:inline-flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">+</span> Position hinzufügen';
+    btn.onclick = function(){ addPosition(); };
+    document.getElementById('posList').appendChild(btn);
+  }
   ['bescheid','auslagen'].forEach(function(lid) {
     posCounter++;
     var pid = 'pos_' + posCounter;
@@ -601,14 +607,17 @@ addPosition = function(lid) {
     el.parentNode.removeChild(el);
   });
   _origAdd(lid);
-  // Re-append fixed rows
+  // Re-append: first button, then fixed rows
   var list = document.getElementById('posList');
+  var addBtn = document.getElementById('add-pos-btn');
+  if (addBtn) { addBtn.parentNode.removeChild(addBtn); list.appendChild(addBtn); }
   fixed.forEach(function(el){ list.appendChild(el); });
 };
 
 // ── Start: ESt + Standardpositionen ────────────────────────────────────────
 addPosition('est');
 addPosition('anlage_ngre');
+addPosition('anlage_kap');
 addFixedPositions();
 </script>
 </body>
