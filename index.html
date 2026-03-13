@@ -27,7 +27,7 @@
 body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-weight:300;min-height:100vh;padding:40px 20px 80px;transition:background .25s,color .25s;}
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(93,158,122,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(93,158,122,0.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
 .container{max-width:920px;margin:0 auto;position:relative;z-index:1;}
-header{text-align:center;margin-bottom:48px;}
+header{text-align:center;margin-bottom:32px;}
 .badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);border:1px solid rgba(201,168,76,0.3);padding:4px 14px;margin-bottom:18px;}
 h1{font-family:'Playfair Display',serif;font-size:clamp(26px,5vw,44px);font-weight:600;line-height:1.15;color:var(--text);margin-bottom:10px;}
 h1 span{color:var(--gold);}
@@ -67,8 +67,8 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
 .result-row .rv{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:400;white-space:nowrap;}
 .sep{height:1px;background:var(--border);margin:4px 0;}
 .total-row{display:flex;justify-content:space-between;align-items:baseline;padding-top:18px;border-top:1px solid var(--gold);margin-top:8px;}
-.total-label{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:400;}
-.total-value{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:400;}
+.total-label{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;}
+.total-value{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;}
 .note{font-size:10px;color:var(--text-muted);margin-top:14px;line-height:1.7;font-family:'IBM Plex Mono',monospace;}
 @media(max-width:680px){
   .pos-header{display:none;}
@@ -94,7 +94,6 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
 
 <div class="container">
 <header>
-  <div class="badge">StBVV &middot; RVG &mdash; Honorarberechnung</div>
   <h1><span>Honor</span>ly</h1>
   <p class="subtitle">Steuerberaterverg&uuml;tung nach StBVV &amp; RVG &middot; Tabellen A, B &amp; C &middot; inkl. MwSt.</p>
   <div style="margin-top:16px;display:inline-flex;gap:0;border:1px solid var(--border);">
@@ -130,7 +129,7 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
   </div>
   <div id="resultRows"></div>
   <div class="total-row">
-    <div class="total-label" id="totalLabel">Gesamtbetrag inkl. Umsatzsteuer</div>
+    <div class="total-label" id="totalLabel">Bruttobetrag</div>
     <div class="total-value" id="totalVal">0,00 EUR</div>
   </div>
   <p class="note">
@@ -350,7 +349,7 @@ var leistungen = [
   {id:'bilanz',     name:'Jahresabschluss / Bilanz',             tab:tabelleB, tab_key:'B', nenner:20, min:10, max:40,  default:25,   hint:'&sect;35 StBVV &middot; Tabelle B &middot; GW: Mittel aus berichtigter Bilanzsumme und Jahresleistung', gwDef:500000, gwStep:5000},
   {id:'kst',        name:'K&ouml;rperschaftsteuer (KSt)',         tab:tabelleA, tab_key:'A', nenner:10, min:2,  max:8,   default:5,    hint:'&sect;24 StBVV &middot; GW: zu versteuerndes Einkommen', gwDef:100000, gwStep:1000},
   {id:'gewerbe',    name:'Gewerbesteuererklarung',               tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:6,   default:2,    hint:'&sect;24 I Nr.1 StBVV &middot; GW: Gewerbeertrag', gwDef:80000, gwStep:1000},
-  {id:'ust',        name:'Umsatzsteuererklarung',                tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:8,   default:2,    hint:'&sect;24 I Nr.2 StBVV &middot; GW: Jahresumsatz', gwDef:200000, gwStep:1000},
+  {id:'ust',        name:'Umsatzsteuererklarung',                tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:8,   default:2,    hint:'&sect;24 I Nr.2 StBVV &middot; GW: Jahresumsatz', gwDef:8000, gwStep:1000},
   {id:'ust_va',     name:'USt-Voranmeldung (je Monat)',          tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:4,   default:2,    hint:'&sect;24 I Nr.2 StBVV &middot; GW: Monatsumsatz', gwDef:20000, gwStep:500},
   {id:'buchf',      name:'Laufende Buchf&uuml;hrung (monatl.)', tab:tabelleC, tab_key:'C', nenner:10, min:2,  max:12,  default:7,    hint:'&sect;33 StBVV &middot; Tabelle C &middot; GW: Monatsumsatz', gwDef:15000, gwStep:500},
   // ── Sonstiges ─────────────────────────────────────────────────────────────
@@ -441,10 +440,13 @@ function buildRowHTML(pid, lid, cfg) {
     : '<span class="pos-name-cell"><select onchange="onLeistungChange(\''+pid+'\',this.value)" style="width:100%">' + leistungOpts + '</select><div class="hint" id="hint_'+pid+'">' + cfg.hint + '</div></span>';
 
   var gwInput = cfg.fixed
-    ? '<input type="number" id="gw_'+pid+'" value="' + cfg.gwDef + '" step="' + cfg.gwStep + '" min="0" oninput="calc()" style="width:100%">'
-    : '<input type="number" id="gw_'+pid+'" value="' + cfg.gwDef + '" step="' + cfg.gwStep + '" min="0"' +
-      (cfg.pauschal ? ' readonly' : (cfg.gw_auto ? ' oninput="this.dataset.manual=1;calc()"' : ' oninput="calc()"')) +
-      ' style="width:100%' + (cfg.gw_auto ? ';opacity:0.75;border-style:dashed' : '') + '">';
+    ? '<input type="text" id="gw_'+pid+'" value="' + fmtInput(cfg.gwDef) + '" oninput="calc()" onblur="var v=parseDe(this.value);if(v)this.value=fmtInput(v);" onfocus="var v=parseDe(this.value);if(v)this.value=String(v).replace(\'.\',\',\');" style="width:100%">'
+    : '<input type="text" id="gw_'+pid+'" value="' + fmtInput(cfg.gwDef) + '" ' +
+      (cfg.pauschal ? 'readonly ' : '') +
+      (cfg.gw_auto ? 'oninput="this.dataset.manual=1;calc()" ' : 'oninput="calc()" ') +
+      'onblur="if(!this.readOnly){var v=parseDe(this.value);if(v||v===0)this.value=fmtInput(v);}" ' +
+      'onfocus="if(!this.readOnly){var v=parseDe(this.value);this.value=String(v).replace(\'.\',\',\');}" ' +
+      'style="width:100%' + (cfg.gw_auto ? ';opacity:0.75;border-style:dashed' : '') + '">';
 
   var removeBtn = cfg.fixed
     ? '<span></span>'
@@ -493,6 +495,36 @@ function clampFak(el, mn, mx) {
   el.value = v;
 }
 
+// ── Eingabefeld-Formatierung ───────────────────────────────────────────────
+function parseDe(str) {
+  if (str === undefined || str === null) return 0;
+  // Remove thousands dots, replace decimal comma with dot
+  var s = String(str).replace(/\./g,'').replace(',','.');
+  return parseFloat(s) || 0;
+}
+function fmtInput(n) {
+  if (isNaN(n) || n === '') return '';
+  // Format with German thousands separator, no decimals for whole numbers
+  return n.toLocaleString('de-DE', {maximumFractionDigits:2});
+}
+function attachInputFormatting(el) {
+  if (!el || el.dataset.fmtAttached) return;
+  el.dataset.fmtAttached = '1';
+  // Format on blur
+  el.addEventListener('blur', function() {
+    var v = parseDe(this.value);
+    if (!isNaN(v) && this.value !== '') this.value = fmtInput(v);
+  });
+  // On focus: show plain number for easy editing
+  el.addEventListener('focus', function() {
+    var v = parseDe(this.value);
+    if (!isNaN(v) && this.value !== '') this.value = String(v).replace('.',',');
+  });
+  // Initial format
+  var init = parseDe(el.value);
+  if (!isNaN(init) && el.value !== '') el.value = fmtInput(init);
+}
+
 // ── Berechnung ──────────────────────────────────────────────────────────────
 function calc() {
   var rows = document.querySelectorAll('#posList .pos-row');
@@ -509,7 +541,7 @@ function calc() {
     var cfg = leistungMap[lid];
     if (!cfg) return;
     if (cfg && cfg.anlage) {
-      var gw = parseFloat(document.getElementById('gw_'+pid).value) || 0;
+      var gw = parseDe(document.getElementById('gw_'+pid).value);
       anlageGwSum += gw;
     }
   });
@@ -525,7 +557,7 @@ function calc() {
     if (!cfg) return;
     if (cfg && cfg.gw_auto) {
       var gwEl = document.getElementById('gw_'+pid);
-      if (gwEl && gwEl.dataset.manual !== '1') gwEl.value = autoGw;
+      if (gwEl && gwEl.dataset.manual !== '1') gwEl.value = fmtInput(autoGw);
     }
   });
 
@@ -536,13 +568,13 @@ function calc() {
     if (!lid) return;
     var cfg = leistungMap[lid];
     if (!cfg) return;
-    var gw = parseFloat(document.getElementById('gw_'+pid).value) || 0;
+    var gw = parseDe(document.getElementById('gw_'+pid).value);
     var fakEl2 = document.getElementById('fak_'+pid);
     var fak = (fakEl2 && fakEl2.value) ? parseFloat(fakEl2.value) : mittelsatz(cfg.min, cfg.max);
 
     var netto;
     if (cfg.bescheid) {
-      var anzahl = parseFloat(document.getElementById('fak_'+pid) ? document.getElementById('fak_'+pid).value : 1) || 1;
+      var anzahl = parseDe(document.getElementById('fak_'+pid) ? document.getElementById('fak_'+pid).value : '1') || 1;
       netto = anzahl * gw;
     } else if (cfg.pauschal) {
       netto = parseFloat(document.getElementById('gw_'+pid).value) || cfg.pauschal;
@@ -575,13 +607,13 @@ function calc() {
   var brutto = Math.round((sumNetto + mwst) * 100) / 100;
 
   resultHTML += '<div class="sep"></div>';
-  resultHTML += '<div class="result-row" style="padding:10px 0;border-top:1px solid var(--border);margin-top:4px;"><span class="rv" style="font-size:15px;font-weight:400;">Nettobetrag</span><span class="rv" style="font-size:15px;font-weight:400;">' + fmt(sumNetto) + '&nbsp;&euro;</span></div>';
+  resultHTML += '<div class="result-row" style="padding:10px 0;border-top:1px solid var(--border);margin-top:4px;"><span class="rv" style="font-size:15px;font-weight:600;">Nettobetrag</span><span class="rv" style="font-size:15px;font-weight:600;">' + fmt(sumNetto) + '&nbsp;&euro;</span></div>';
   if (ustAn) resultHTML += '<div class="result-row"><span class="rl">Umsatzsteuer 19&nbsp;%</span><span class="rv">' + fmt(mwst) + '&nbsp;&euro;</span></div>';
 
   document.getElementById('resultRows').innerHTML = resultHTML;
   document.getElementById('totalVal').textContent = fmt(brutto) + ' EUR';
   var lbl = document.getElementById('totalLabel');
-  if (lbl) lbl.textContent = ustAn ? 'Gesamtbetrag inkl. Umsatzsteuer' : 'Gesamtbetrag (netto)';
+  if (lbl) lbl.textContent = ustAn ? 'Bruttobetrag' : 'Nettobetrag';
 }
 
 // ── Feste Positionen (immer am Ende, nicht entfernbar) ─────────────────────
