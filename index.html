@@ -375,7 +375,7 @@ var leistungen = [
   {id:'buchf',      name:'Laufende Buchf&uuml;hrung (monatl.)', tab:tabelleC, tab_key:'C', nenner:10, min:2,  max:12,  default:7,    hint:'&sect;33 StBVV &middot; Tabelle C &middot; GW: Monatsumsatz', gwDef:15000, gwStep:500},
   // ── Sonstiges ─────────────────────────────────────────────────────────────
   {id:'beratung',   name:'Beratung Auftr&auml;ge (Zeitaufwand)',tab:tabelleA, tab_key:'A', nenner:10, min:0.5,max:20,  default:1,    hint:'Zeitabrechnung &middot; Stundensatz unter Gegenstandswert eintragen', gwDef:160, gwStep:10, zeit:true},
-  {id:'einspruch',  name:'Rechtsbehelfsverfahren (Einspruch)',           tab:tabelleRVG, tab_key:'RVG', nenner:10, min:5,  max:25,  default:13,   hint:'Nr. 2300 VV-RVG &middot; Rahmen: 0,5&ndash;2,5-fach &middot; GW: festgesetzte Steuer &middot; inkl. h&auml;lftiger Anrechnung (Vorb. 2.3 Abs. 4) + Pauschale Nr. 7002 VV-RVG (20&nbsp;%, max. 20&nbsp;&euro;)', gwDef:5000, gwStep:500, rvg:true},
+  {id:'einspruch',  name:'Rechtsbehelfsverfahren (Einspruch)',           tab:tabelleRVG, tab_key:'RVG', nenner:10, min:5,  max:25,  default:10,   hint:'Nr. 2300 VV-RVG &middot; Rahmen: 0,5&ndash;2,5-fach &middot; GW: strittige Steuer &middot; inkl. h&auml;lftiger Anrechnung (Vorb. 2.3 Abs. 4) + Pauschale Nr. 7002 VV-RVG (20&nbsp;%, max. 20&nbsp;&euro;)', gwDef:5000, gwStep:500, rvg:true},
   // ── Fest (immer am Ende) ──────────────────────────────────────────────────
   {id:'bescheid',   name:'Bescheidpr&uuml;fung',            tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:1,   default:1,    hint:'&sect;28 StBVV &middot; Anzahl &times; Betrag je Bescheid', gwDef:30, gwStep:1, bescheid:true, fixed:true},
   {id:'auslagen',   name:'Auslagenpauschale',                    tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:1,   default:1,    hint:'§16 StBVV', gwDef:20, gwStep:1, pauschal:20, fixed:true},
@@ -441,12 +441,10 @@ function buildRowHTML(pid, lid, cfg) {
     : cfg.zeit
       ? '<span style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--gold)">Zeitabrechnung</span>'
       : '<span style="display:flex;flex-direction:column;justify-content:center">' +
-          '<span style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--gold)" id="rahmen_'+pid+'">Tab.&nbsp;' + tabName + '&nbsp;&bull;&nbsp;' + rahmen + '</span>' +
-          '<span class="hint" id="mittelhint_'+pid+'">' +
-          (cfg.rvg
-            ? 'Regelwert: <b>1,3-fach</b> &middot; Rahmen: 0,5&ndash;2,5'
-            : 'Mittelsatz: <b>' + mittel + '/' + cfg.nenner + '</b>') +
+          '<span style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--gold)" id="rahmen_'+pid+'">' +
+          (cfg.rvg ? 'Rahmen&nbsp;' : 'Tab.&nbsp;' + tabName + '&nbsp;&bull;&nbsp;') + rahmen +
           '</span>' +
+          (cfg.rvg ? '' : '<span class="hint" id="mittelhint_'+pid+'">Mittelsatz: <b>' + mittel + '/' + cfg.nenner + '</b></span>') +
         '</span>';
   var defVal = cfg.default !== undefined ? cfg.default : mittelsatz(cfg.min, cfg.max);
   var faktorCol = cfg.pauschal
@@ -590,6 +588,12 @@ function calc() {
     var gw = parseDe(document.getElementById('gw_'+pid).value);
     var fakEl2 = document.getElementById('fak_'+pid);
     var fak = (fakEl2 && fakEl2.value) ? parseFloat(fakEl2.value) : mittelsatz(cfg.min, cfg.max);
+    if (!isNaN(fak) && cfg.min !== undefined) fak = Math.max(cfg.min, Math.min(cfg.max, fak));
+    // Clamp innerhalb calc() damit auch während der Eingabe korrekt gerechnet wird
+    if (!cfg.pauschal && !cfg.bescheid && !cfg.zeit && !isNaN(fak)) {
+      if (fak < cfg.min) fak = cfg.min;
+      if (fak > cfg.max) fak = cfg.max;
+    }
 
     var netto;
     if (cfg.bescheid) {
@@ -601,11 +605,13 @@ function calc() {
       netto = gw * fak; // gw = Stundensatz, fak = Stunden
     } else if (cfg.rvg) {
       var basisRVG = lookupRVG(gw);
-      // (Faktor - 0,5) × Tabellenwert (hälftige Anrechnung Vorb. 2.3 Abs. 4 VV RVG)
-      var gebuehr = basisRVG * (fak - 5) / 10;
-      // Nr. 7002 VV-RVG: Post-/Telekommunikationspauschale = 20% der Gebühr, max. 20 €
-      var pauschale7002 = Math.min(gebuehr * 0.20, 20);
-      netto = gebuehr + pauschale7002;
+      // Basis bei Eingabe 10 (= Regelgebühr nach Anrechnung + Nr. 7002):
+      // (1,3 − 0,5) × basis + min(basis × 0,8 × 0,2, 20)
+      var gebuehr10 = basisRVG * 0.8;
+      var pauschale10 = Math.min(gebuehr10 * 0.20, 20);
+      var netto10 = gebuehr10 + pauschale10;
+      // Lineare Skalierung: Eingabe 10 → netto10, andere Werte proportional
+      netto = netto10 / 10 * fak;
     } else {
       var basis = lookup(gw, cfg.tab);
       netto = basis * fak / cfg.nenner;
