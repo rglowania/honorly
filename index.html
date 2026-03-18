@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Honorly</title>
+<title>StBVV-Rechner</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root,[data-theme="dark"]{
@@ -75,6 +75,21 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
   .pos-row{grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto;gap:6px;}
   .pos-name-cell{grid-column:1/3;}
 }
+/* ── Kategorie-Tabs ─────────────────────────────────────────── */
+.kat-tabs{display:flex;gap:0;margin-top:24px;margin-bottom:0;}
+.kat-tab{
+  flex:1;background:var(--surface);border:1px solid var(--border);
+  border-bottom:none;padding:11px 0;margin-right:-1px;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--text-muted);cursor:pointer;
+  transition:all .2s;position:relative;
+}
+.kat-tab:hover{color:var(--accent);background:var(--surface2);}
+.kat-tab.active{color:var(--accent);background:var(--surface);}
+.kat-tab.active::before{
+  content:'';position:absolute;top:0;left:0;right:0;
+  height:3px;background:var(--accent);
+}
 </style>
 </head>
 <body>
@@ -94,15 +109,21 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
 
 <div class="container">
 <header>
-  <h1><span>Honor</span>ly</h1>
-  <p class="subtitle">Steuerberaterverg&uuml;tung nach StBVV &amp; RVG &middot; Tabellen A, B &amp; C &middot; inkl. MwSt.</p>
+  <h1><span>StBVV</span>-Rechner</h1>
+  <p class="subtitle">Steuerberaterverg&uuml;tung nach StBVV &amp; RVG &middot; Tabellen A, B &amp; C</p>
   <div style="margin-top:16px;display:inline-flex;gap:0;border:1px solid var(--border);">
-    <button id="btn-fassung-alt" onclick="setFassung('alt')" style="background:transparent;border:none;padding:7px 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);cursor:pointer;transition:all .2s;" title="Tabellenwerte bis 30.06.2025">bis 30.06.2025</button>
-    <button id="btn-fassung-neu" onclick="setFassung('neu')" style="background:var(--accent-dim);border:none;padding:7px 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);cursor:pointer;transition:all .2s;" title="Tabellenwerte ab 01.07.2025">ab 01.07.2025</button>
+    <button id="btn-fassung-alt" onclick="setFassung('alt')" style="background:transparent;border:none;padding:6px 14px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);cursor:pointer;transition:all .2s;" title="Tabellenwerte bis 30.06.2025">bis 30.06.2025</button>
+    <button id="btn-fassung-neu" onclick="setFassung('neu')" style="background:var(--accent-dim);border:none;padding:6px 14px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);cursor:pointer;transition:all .2s;" title="Tabellenwerte ab 01.07.2025">ab 01.07.2025</button>
   </div>
 </header>
 
-<div class="card">
+<div class="kat-tabs">
+  <button class="kat-tab active" id="kat-est" onclick="setKategorie('est')">Steuererkl&auml;rung</button>
+  <button class="kat-tab" id="kat-bilanz" onclick="setKategorie('bilanz')">Jahresabschluss</button>
+  <button class="kat-tab" id="kat-einspruch" onclick="setKategorie('einspruch')">Einspruch</button>
+</div>
+
+<div class="card" style="margin-top:0;border-top:none;">
   <div class="card-title">Leistungspositionen</div>
   <div class="pos-header">
     <span>Leistung</span>
@@ -354,7 +375,7 @@ var leistungen = [
   {id:'buchf',      name:'Laufende Buchf&uuml;hrung (monatl.)', tab:tabelleC, tab_key:'C', nenner:10, min:2,  max:12,  default:7,    hint:'&sect;33 StBVV &middot; Tabelle C &middot; GW: Monatsumsatz', gwDef:15000, gwStep:500},
   // ── Sonstiges ─────────────────────────────────────────────────────────────
   {id:'beratung',   name:'Beratung Auftr&auml;ge (Zeitaufwand)',tab:tabelleA, tab_key:'A', nenner:10, min:0.5,max:20,  default:1,    hint:'Zeitabrechnung &middot; Stundensatz unter Gegenstandswert eintragen', gwDef:160, gwStep:10, zeit:true},
-  {id:'einspruch',  name:'Rechtsbehelfsverfahren (Einspruch)',           tab:tabelleRVG, tab_key:'RVG', nenner:10, min:5,  max:25,  default:15,   hint:'Nr. 2300 VV-RVG &middot; Rahmen: 0,5&ndash;2,5-fach &middot; Mittelgeb&uuml;hr: 1,5-fach &middot; GW: festgesetzte Steuer', gwDef:5000, gwStep:500, rvg:true},
+  {id:'einspruch',  name:'Rechtsbehelfsverfahren (Einspruch)',           tab:tabelleRVG, tab_key:'RVG', nenner:10, min:5,  max:25,  default:13,   hint:'Nr. 2300 VV-RVG &middot; Rahmen: 0,5&ndash;2,5-fach &middot; GW: festgesetzte Steuer &middot; inkl. h&auml;lftiger Anrechnung (Vorb. 2.3 Abs. 4) + Pauschale Nr. 7002 VV-RVG (20&nbsp;%, max. 20&nbsp;&euro;)', gwDef:5000, gwStep:500, rvg:true},
   // ── Fest (immer am Ende) ──────────────────────────────────────────────────
   {id:'bescheid',   name:'Bescheidpr&uuml;fung',            tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:1,   default:1,    hint:'&sect;28 StBVV &middot; Anzahl &times; Betrag je Bescheid', gwDef:30, gwStep:1, bescheid:true, fixed:true},
   {id:'auslagen',   name:'Auslagenpauschale',                    tab:tabelleA, tab_key:'A', nenner:10, min:1,  max:1,   default:1,    hint:'§16 StBVV', gwDef:20, gwStep:1, pauschal:20, fixed:true},
@@ -433,8 +454,8 @@ function buildRowHTML(pid, lid, cfg) {
     : cfg.bescheid
       ? '<span><input type="number" id="fak_'+pid+'" value="1" min="1" step="1" oninput="calc()" style="width:100%"><div class="hint">Anzahl</div></span>'
     : cfg.zeit
-      ? '<span><input type="number" id="fak_'+pid+'" value="'+defVal+'" min="0.5" step="0.5" oninput="calc()" style="width:100%"><div class="hint">Stunden</div></span>'
-      : '<span><input type="number" id="fak_'+pid+'" value="'+defVal+'" min="'+cfg.min+'" max="'+cfg.max+'" step="0.5" oninput="clampFak(this,'+cfg.min+','+cfg.max+');calc()" style="width:100%"></span>';
+      ? '<span><input type="number" id="fak_'+pid+'" value="'+defVal+'" step="0.5" oninput="calc()" style="width:100%"><div class="hint">Stunden</div></span>'
+      : '<span><input type="number" id="fak_'+pid+'" value="'+defVal+'" step="0.5" oninput="calc()" onblur="clampFak(this,'+cfg.min+','+cfg.max+')" style="width:100%"></span>';
   var nameCell = cfg.fixed
     ? '<span class="pos-name-cell"><span style="font-size:13px;color:var(--text)">' + cfg.name + '</span><div class="hint">' + cfg.hint + '</div></span>'
     : '<span class="pos-name-cell"><select onchange="onLeistungChange(\''+pid+'\',this.value)" style="width:100%">' + leistungOpts + '</select><div class="hint" id="hint_'+pid+'">' + cfg.hint + '</div></span>';
@@ -448,9 +469,7 @@ function buildRowHTML(pid, lid, cfg) {
       'onfocus="if(!this.readOnly){var v=parseDe(this.value);this.value=String(v).replace(\'.\',\',\');}" ' +
       'style="width:100%' + (cfg.gw_auto ? ';opacity:0.75;border-style:dashed' : '') + '">';
 
-  var removeBtn = cfg.fixed
-    ? '<span></span>'
-    : '<button class="pos-remove" onclick="removePosition(\''+pid+'\' )" title="Entfernen">&times;</button>';
+  var removeBtn = '<button class="pos-remove" onclick="removePosition(\''+pid+'\' )" title="Entfernen">&times;</button>';
 
   return (
     nameCell +
@@ -582,7 +601,11 @@ function calc() {
       netto = gw * fak; // gw = Stundensatz, fak = Stunden
     } else if (cfg.rvg) {
       var basisRVG = lookupRVG(gw);
-      netto = basisRVG * fak / 10;
+      // (Faktor - 0,5) × Tabellenwert (hälftige Anrechnung Vorb. 2.3 Abs. 4 VV RVG)
+      var gebuehr = basisRVG * (fak - 5) / 10;
+      // Nr. 7002 VV-RVG: Post-/Telekommunikationspauschale = 20% der Gebühr, max. 20 €
+      var pauschale7002 = Math.min(gebuehr * 0.20, 20);
+      netto = gebuehr + pauschale7002;
     } else {
       var basis = lookup(gw, cfg.tab);
       netto = basis * fak / cfg.nenner;
@@ -594,7 +617,7 @@ function calc() {
 
     var pos_name = (sel && sel.options[sel.selectedIndex]) ? sel.options[sel.selectedIndex].text.replace(/&[a-z]+;/g,'') : cfg.name.replace(/&[a-z]+;/g,'').replace(/&[a-z0-9]+;/g,'');
     resultHTML += '<div class="result-row"><span class="rl">' +
-      pos_name + (cfg.bescheid ? ' &middot; ' + (parseFloat(document.getElementById('fak_'+pid) ? document.getElementById('fak_'+pid).value : 1)||1) + '&nbsp;&times;&nbsp;' + fmt(gw) + '&nbsp;&euro;' : cfg.pauschal ? ' (pauschal)' : cfg.zeit ? ' &middot; ' + fak.toString().replace('.',',') + '&nbsp;h &middot; ' + fmt(gw) + '&nbsp;&euro;/h' : cfg.rvg ? ' &middot; GW&nbsp;' + fmt(gw) + '&nbsp;&euro; &middot; ' + (fak/10).toFixed(1).replace('.',',') + '-fach' : ' &middot; GW&nbsp;' + fmt(gw) + '&nbsp;&euro; &middot; ' + fak + '/' + cfg.nenner) +
+      pos_name + (cfg.bescheid ? ' &middot; ' + (parseFloat(document.getElementById('fak_'+pid) ? document.getElementById('fak_'+pid).value : 1)||1) + '&nbsp;&times;&nbsp;' + fmt(gw) + '&nbsp;&euro;' : cfg.pauschal ? ' (pauschal)' : cfg.zeit ? ' &middot; ' + fak.toString().replace('.',',') + '&nbsp;h &middot; ' + fmt(gw) + '&nbsp;&euro;/h' : cfg.rvg ? ' &middot; GW&nbsp;' + fmt(gw) + '&nbsp;&euro; &middot; ' + (fak/10).toFixed(1).replace('.',',') + '-fach inkl. Anrechnung &amp; Nr. 7002' : ' &middot; GW&nbsp;' + fmt(gw) + '&nbsp;&euro; &middot; ' + fak + '/' + cfg.nenner) +
       '</span><span class="rv">' + fmt(netto) + '&nbsp;&euro;</span></div>';
   });
 
@@ -628,7 +651,8 @@ function addFixedPositions() {
     btn.onclick = function(){ addPosition(); };
     document.getElementById('posList').appendChild(btn);
   }
-  ['bescheid','auslagen'].forEach(function(lid) {
+  var fixedIds = (aktiveKategorie === 'einspruch') ? ['auslagen'] : ['bescheid','auslagen'];
+  fixedIds.forEach(function(lid) {
     posCounter++;
     var pid = 'pos_' + posCounter;
     var cfg = leistungMap[lid];
@@ -660,11 +684,40 @@ addPosition = function(lid) {
   fixed.forEach(function(el){ list.appendChild(el); });
 };
 
-// ── Start: ESt + Standardpositionen ────────────────────────────────────────
-addPosition('est');
-addPosition('anlage_ngre');
-addPosition('anlage_kap');
-addFixedPositions();
+// ── Kategorie-Tabs ──────────────────────────────────────────────────────────
+var aktiveKategorie = null;
+
+function setKategorie(kat) {
+  aktiveKategorie = kat;
+  // Tab-Buttons aktualisieren
+  ['est','bilanz','einspruch'].forEach(function(k) {
+    var btn = document.getElementById('kat-' + k);
+    if (btn) {
+      btn.classList.toggle('active', k === kat);
+    }
+  });
+
+  // Liste leeren (alle Positionen inkl. fixed + button entfernen)
+  var list = document.getElementById('posList');
+  list.innerHTML = '';
+
+  // Neue Standardpositionen laden
+  if (kat === 'est') {
+    addPosition('est');
+    addPosition('anlage_ngre');
+    addPosition('anlage_kap');
+  } else if (kat === 'bilanz') {
+    addPosition('bilanz');
+    addPosition('buchf');
+    addPosition('gewinn');
+  } else if (kat === 'einspruch') {
+    addPosition('einspruch');
+  }
+  addFixedPositions();
+}
+
+// ── Start ────────────────────────────────────────────────────────────────────
+setKategorie('est');
 // Sync toggle visual state
 function syncUstToggle() {
   var cb = document.getElementById('ustToggle');
